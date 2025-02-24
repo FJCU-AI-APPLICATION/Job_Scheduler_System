@@ -3,13 +3,13 @@ import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from typing import Tuple, Deque
+from typing import Tuple, List, Deque
 from collections import deque
 
 # ==============
 # SCHEDULING PARAMS
 # ==============
-NUM_EMPLOYEES = 7  # Number of part-time employees
+NUM_EMPLOYEES = 7  # Default number of part-time employees
 NUM_SHIFTS = 30    # Number of shifts in a month
 MAX_HOURS = 40     # Max hours per employee
 SHIFT_HOURS = 4    # Hours per shift
@@ -79,6 +79,28 @@ class SchedulingEnv:
         # Convert the environment's (shift_index, hours_0, ..., hours_n) into a float array
         return np.array(self.state, dtype=float)
 
+    def set_partial_schedule(self, partial_schedule: List[int]):
+        """
+        Allows you to "inject" an existing partial schedule.
+        partial_schedule: a list of assigned employees for the initial shifts.
+        We'll fast-forward the environment state to that partial assignment.
+        """
+        shift_index = 0
+        hours = [0]*self.num_employees
+        self.previous_employee = None
+        for emp in partial_schedule:
+            # penalty if consecutive with previous
+            if self.previous_employee is not None and emp == self.previous_employee:
+                # we won't retroactively penalize in set, but keep track if needed.
+                pass
+            # assign shift hours
+            hours[emp] += self.shift_hours
+            shift_index += 1
+            self.previous_employee = emp
+
+        self.state = (shift_index,) + tuple(hours)
+        return self._get_observation()
+
 # =====================
 # DQN NETWORK
 # =====================
@@ -135,7 +157,6 @@ def train_dqn(env: SchedulingEnv,
     """
     Trains a DQN agent on the scheduling environment.
     """
-
     state_dim = env.num_employees + 1  # shift_index + hours for each employee
     action_dim = env.num_employees
 
@@ -213,6 +234,9 @@ def train_dqn(env: SchedulingEnv,
 # BUILD SCHEDULE FROM TRAINED MODEL
 # =====================
 def build_schedule_from_dqn(env: SchedulingEnv, dqn: DQN):
+    """
+    Runs a greedy policy in the environment to produce a final schedule.
+    """
     schedule = []
     state = env.reset()
     done = False
@@ -226,17 +250,85 @@ def build_schedule_from_dqn(env: SchedulingEnv, dqn: DQN):
         state = next_state
     return schedule
 
-if __name__ == "__main__":
-    env = SchedulingEnv()
-
-    # Train the DQN agent
-    dqn_agent = train_dqn(env, episodes=2000)
-
-    # Generate final schedule
+# ------------------------------
+# INFERENCE MODES
+# ------------------------------
+def schedule_one_month(num_employees=7, num_shifts=30, episodes=2000):
+    """
+    1) Train & schedule N employees for 1 month.
+    """
+    env = SchedulingEnv(num_shifts=num_shifts, num_employees=num_employees)
+    dqn_agent = train_dqn(env, episodes=episodes)
     schedule = build_schedule_from_dqn(env, dqn_agent)
-    print("\nRL-based (DQN) Schedule (employee indices):", schedule)
 
-    # Analyze distribution
-    counts = np.bincount(schedule, minlength=NUM_EMPLOYEES)
-    for i, c in enumerate(counts):
-        print(f"Employee {EMPLOYEE_MAP[i]}: {c} shifts")
+    # Analyze results
+    counts = np.bincount(schedule, minlength=num_employees)
+    return schedule, counts
+
+def add_new_employee_in_existing_schedule(base_schedule: List[int],
+                                          base_num_employees=7,
+                                          new_employee_index=7,
+                                          total_shifts=30,
+                                          episodes=2000):
+    """
+    2) Start with an existing schedule for (base_num_employees) employees,
+       then add a new employee to the environment.
+
+    We'll create a new environment with (base_num_employees+1) employees.
+    We'll inject the base_schedule so the environment starts from the partial assigned state.
+    Then we train or do inference for the remaining shifts.
+    """
+    # first, let's define the new environment (with 1 additional employee)
+    new_num_employees = base_num_employees + 1
+    env = SchedulingEnv(num_shifts=total_shifts, num_employees=new_num_employees)
+
+    # inject partial schedule
+    env.set_partial_schedule(base_schedule)
+
+    # train on the new environment from that partial state forward
+    dqn_agent = train_dqn(env, episodes=episodes)
+
+    # now build the final schedule (which includes partial + newly assigned)
+    # note that build_schedule_from_dqn re-starts env from scratch, so we need a custom approach.
+    # We can modify it to preserve partial schedule or re-apply partial.
+
+    # Let's do a custom method:
+    final_schedule = base_schedule.copy()
+    state = env.set_partial_schedule(base_schedule)
+    done = False
+    while not done:
+        with torch.no_grad():
+            state_v = torch.FloatTensor(state).unsqueeze(0)
+            q_values = dqn_agent(state_v)
+            action = int(torch.argmax(q_values, dim=1).item())
+        final_schedule.append(action)
+        next_state, _, done, _ = env.step(action)
+        state = next_state
+
+    counts = np.bincount(final_schedule, minlength=new_num_employees)
+    return final_schedule, counts
+
+
+if __name__ == "__main__":
+    # ============ EXAMPLE 1: SCHEDULING ONE MONTH ============
+    sch, cnts = schedule_one_month(num_employees=7, num_shifts=30, episodes=500)
+    print("\n--- Inference #1: Scheduling 7 employees in 30 shifts ---")
+    print("Schedule:", sch)
+    for i, c in enumerate(cnts):
+        print(f"Employee {i}: {c} shifts")
+
+    # ============ EXAMPLE 2: ADD A NEW EMPLOYEE TO EXISTING SCHEDULE ============
+    # Suppose we have an existing schedule from above for the first 20 shifts.
+    base_schedule_20shifts = sch[:20]
+
+    final_sched, final_cnts = add_new_employee_in_existing_schedule(
+        base_schedule_20shifts,
+        base_num_employees=7,
+        new_employee_index=7,
+        total_shifts=30,
+        episodes=500
+    )
+    print("\n--- Inference #2: Add new employee to existing schedule ---")
+    print("Final Schedule:", final_sched)
+    for i, c in enumerate(final_cnts):
+        print(f"Employee {i}: {c} shifts")
