@@ -11,19 +11,27 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env(
+    DEBUG=(bool, False)
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
+# 讀取指定 .env
+ENV_FILE = BASE_DIR / 'envs' / 'dev.env'
+env.read_env(str(ENV_FILE))
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-pp@#-nxkas)m@k)4as&%!j*q0%_u^4xi8l#7zg-wbhxcnkx(3#'
+SECRET_KEY = env('SECRET_KEY', default='unsafe-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -74,20 +82,18 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default':{
-        'ENGINE':'',                    
-        'NAME':'',           
-        'USER':'',                       
-        'PASSWORD':'',                       
-        'HOST':'', 
-        'PORT':'',                           
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': env('DB_PORT'),
         'OPTIONS': {
-            'driver': '',
+            'driver': 'ODBC Driver 17 for SQL Server',
         },
-    },
+    }
 }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
