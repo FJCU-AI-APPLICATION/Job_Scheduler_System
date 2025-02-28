@@ -1,0 +1,9 @@
+#backend
+server/venv
+server/envs
+server/app/__pycache__
+#AI
+AI/__pycache__
+AI/venv
+AI/RL/__pycache__
+AI/RL/result
