@@ -45,6 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'employee',
+    'schedule',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -86,11 +89,11 @@ DATABASES = {
         'ENGINE': 'mssql',
         'NAME': env('DB_NAME'),
         'USER': env('DB_USER'),
-        'PASSWORD': env('DB_PASSWORD'),
+        'PASSWORD': env('MSSQL_SA_PASSWORD'),
         'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
+        'PORT': '',
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            "driver": "ODBC Driver 17 for SQL Server",
         },
     }
 }
