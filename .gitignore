@@ -1,10 +1,9 @@
 #backend
 server/venv
 server/envs
-server/app/__pycache__
+server/apps/__pycache__
 server/employee/__pycache__
 server/schedule/migrations
-
 server/schedule/__pycache__
 server/employee/migrations
 
