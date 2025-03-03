@@ -1,9 +1,14 @@
 #backend
 server/venv
 server/envs
+server/apps/__pycache__
+server/employee/__pycache__
+server/schedule/migrations
+server/schedule/__pycache__
+server/employee/migrations
 server/app/__pycache__
 #AI
 AI/__pycache__
 AI/venv
 AI/RL/__pycache__
-AI/RL/result
+

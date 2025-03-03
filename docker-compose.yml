@@ -1,5 +1,19 @@
 version: '3.0'
 services:
+  database:
+    image: microsoft/mssql-server-linux
+    container_name: database
+    user: root
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./database/mssql_data:/var/opt/mssql/data
+      - ./database/mssql_backup:/backup
+    env_file: 
+      - ./server/envs/dev.env
+    networks:
+      - global-net
+
   backend:
     build:
       context: ./server
@@ -8,7 +22,7 @@ services:
     volumes:
       - .:/usr/src/app/
     ports:
-      - 0.0.0.0:8002:8000
+      - "8002:8000"
     env_file: './server/envs/dev.env'
     restart: "always"
     networks:

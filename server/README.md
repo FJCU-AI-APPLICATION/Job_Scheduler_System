@@ -29,3 +29,10 @@ DB_PORT=
 ```
 
 4. Once the services are up and running, open your web browser and go to `http://127.0.0.1:8000/admin/` to access the Django Admin interface.
+
+Method Endpoint Description
+GET /api/employees/ List all employees
+POST /api/employees/ Create a new employee
+GET /api/employees/<id>/ Retrieve an employee by ID
+PUT /api/employees/<id>/ Update an employee by ID
+DELETE /api/employees/<id>/ Delete an employee by ID

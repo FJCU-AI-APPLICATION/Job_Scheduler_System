@@ -45,6 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'employee',
+    'schedule',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -57,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'app.urls'
+ROOT_URLCONF = 'apps.urls'
 
 TEMPLATES = [
     {
@@ -75,7 +78,12 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'app.wsgi.application'
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,  # Set the number of results per page
+}
+
+WSGI_APPLICATION = 'apps.wsgi.application'
 
 
 # Database
@@ -86,11 +94,11 @@ DATABASES = {
         'ENGINE': 'mssql',
         'NAME': env('DB_NAME'),
         'USER': env('DB_USER'),
-        'PASSWORD': env('DB_PASSWORD'),
+        'PASSWORD': env('MSSQL_SA_PASSWORD'),
         'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
+        'PORT': '',
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            "driver": "ODBC Driver 17 for SQL Server",
         },
     }
 }
