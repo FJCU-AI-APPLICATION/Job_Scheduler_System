@@ -3,9 +3,9 @@ from employee.model import Employee
 from employee.serializer import EmployeeSerializer
 
 class EmployeePagination(pagination.PageNumberPagination):
-    page_size = 5  # Number of employees per page
-    page_size_query_param = 'page_size'  # Allow users to change page size via ?page_size=10
-    max_page_size = 20  # Prevent large requests
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 20
 
 # List and Create View
 class EmployeeListCreateView(generics.ListCreateAPIView):
