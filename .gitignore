@@ -11,3 +11,5 @@ server/app/__pycache__
 AI/__pycache__
 AI/venv
 AI/RL/__pycache__
+#frontend
+client/envs
