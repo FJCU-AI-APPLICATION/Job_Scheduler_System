@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'employee',
     'schedule',
     'rest_framework',
+    'policy'
 ]
 
 MIDDLEWARE = [
