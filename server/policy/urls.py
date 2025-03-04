@@ -14,8 +14,8 @@ urlpatterns = [
     path('aimodels/<int:pk>/', AiModelDetailView.as_view(), name='aimodel-detail'),
 
     # Shift Policy
-    path('shiftpolicies/', ShiftPolicyListCreateView.as_view(), name='shiftpolicy-list-create'),
-    path('shiftpolicies/<int:pk>/', ShiftPolicyDetailView.as_view(), name='shiftpolicy-detail'),
+    path('', ShiftPolicyListCreateView.as_view(), name='shiftpolicy-list-create'),
+    path('<int:pk>/', ShiftPolicyDetailView.as_view(), name='shiftpolicy-detail'),
 
     # Shift Policy Detail
     path('shiftpolicydetails/', ShiftPolicyDetailListCreateView.as_view(), name='shiftpolicydetail-list-create'),

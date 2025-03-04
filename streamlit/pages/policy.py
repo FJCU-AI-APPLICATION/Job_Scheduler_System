@@ -13,7 +13,7 @@ def fetch_policies():
         st.error(f"Error fetching policies: {e}")
         return []
 
-def create_policy(name, description, ai_model_id):
+def create_policy(name, description):
     data = {
         "policy_name": name,
         "description": description,

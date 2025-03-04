@@ -17,18 +17,11 @@ class ShiftPolicy(models.Model):
     policy_name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
 
-    # Binds exactly one AI model to this policy
-    ai_model = models.ForeignKey(
-        AiModel,
-        on_delete=models.CASCADE,
-        related_name='policies'
-    )
-
     class Meta:
         db_table = 'ShiftPolicy'
 
     def __str__(self):
-        return f"{self.policy_name} - {self.ai_model}"
+        return f"{self.policy_name}"
 
 
 class ShiftPolicyDetail(models.Model):

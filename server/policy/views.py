@@ -1,7 +1,5 @@
-from django.shortcuts import render
-
 # Create your views here.
-from rest_framework import generics, viewsets
+from rest_framework import generics
 from policy.models import AiModel, ShiftPolicy, ShiftPolicyDetail
 from policy.serializers import (
     AiModelSerializer, 
@@ -18,11 +16,11 @@ class AiModelDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AiModelSerializer
 
 class ShiftPolicyListCreateView(generics.ListCreateAPIView):
-    queryset = ShiftPolicy.objects.select_related('ai_model').all()
+    queryset = ShiftPolicy.objects.all()
     serializer_class = ShiftPolicySerializer
 
 class ShiftPolicyDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = ShiftPolicy.objects.select_related('ai_model').all()
+    queryset = ShiftPolicy.objects.all()
     serializer_class = ShiftPolicySerializer
 
 class ShiftPolicyDetailListCreateView(generics.ListCreateAPIView):
