@@ -13,7 +13,7 @@ class AiModel(models.Model):
         return f"{self.model_name} ({self.model_version})"
 
 
-class ShiftPolicy(models.Model):
+class Policy(models.Model):
     policy_name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
 
@@ -24,9 +24,9 @@ class ShiftPolicy(models.Model):
         return f"{self.policy_name}"
 
 
-class ShiftPolicyDetail(models.Model):
+class ShiftPolicy(models.Model):
     policy = models.ForeignKey(
-        ShiftPolicy,
+        Policy,
         on_delete=models.CASCADE,
         related_name='shift_details'
     )
