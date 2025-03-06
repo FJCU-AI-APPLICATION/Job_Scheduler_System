@@ -1,4 +1,4 @@
-from schedule.model import  Schedule
+from server.schedule.models import  Schedule
 from rest_framework import serializers
 
 class ScheduleSerializer(serializers.ModelSerializer):
