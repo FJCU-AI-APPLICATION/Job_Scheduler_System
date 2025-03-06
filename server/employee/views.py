@@ -1,6 +1,10 @@
 from rest_framework import generics, pagination
-from employee.model import Employee
-from employee.serializer import EmployeeSerializer
+from employee.model import Employee, EmployeeUnavailability
+from employee.serializer import EmployeeSerializer, EmployeeUnavailabilitySerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from schedule.models import ScheduleEmployee
 
 class EmployeePagination(pagination.PageNumberPagination):
     page_size = 5
@@ -17,3 +21,82 @@ class EmployeeListCreateView(generics.ListCreateAPIView):
 class EmployeeDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
+
+
+class EmployeeUnavailabilityListCreateView(generics.ListCreateAPIView):
+    """
+    List all unavailable day records for a specific employee.
+    The 'employee_id' query parameter is required.
+    Also allows creating a new unavailable day record.
+    """
+    serializer_class = EmployeeUnavailabilitySerializer
+
+    def get_queryset(self):
+        employee_id = self.request.query_params.get('employee_id')
+        if not employee_id:
+            return Response(
+                {"error": "The 'employee_id' query parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return EmployeeUnavailability.objects.filter(employee_id=employee_id)
+
+
+class EmployeeUnavailabilityDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update, or delete a specific EmployeeUnavailability record.
+    """
+    queryset = EmployeeUnavailability.objects.all()
+    serializer_class = EmployeeUnavailabilitySerializer
+
+class EmployeeShiftListView(APIView):
+    """
+    GET endpoint to retrieve the shifts assigned to a given employee.
+    
+    Query Parameters:
+      - employee_id (required)
+      - start_date (optional, in "YYYY-MM-DD" format)
+      - end_date (optional, in "YYYY-MM-DD" format)
+    
+    The response returns a list of schedule assignments with the following details:
+      - schedule name and description
+      - schedule start_date, start_time, and end_time
+      - assigned_date (when the assignment was created)
+    """
+    def get(self, request, *args, **kwargs):
+        employee_id = request.query_params.get('employee_id')
+        if not employee_id:
+            return Response(
+                {"error": "The 'employee_id' query parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Start with all schedule assignments for the employee.
+        assignments = ScheduleEmployee.objects.filter(employee_id=employee_id).select_related('schedule')
+        
+        # Optionally filter by date range if provided.
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        if start_date:
+            assignments = assignments.filter(schedule__start_date__gte=start_date)
+        if end_date:
+            assignments = assignments.filter(schedule__start_date__lte=end_date)
+        
+        # Build the response context.
+        result = []
+        for assignment in assignments:
+            sch = assignment.schedule
+            result.append({
+                "schedule_name": sch.name,
+                "description": sch.description,
+                "schedule_date": sch.start_date,  # Assuming schedule date is stored here.
+                "start_time": sch.start_time.strftime("%H:%M:%S"),
+                "end_time": sch.end_time.strftime("%H:%M:%S"),
+                "assigned_date": assignment.assigned_date.strftime("%Y-%m-%d %H:%M:%S")
+            })
+        
+        return Response(
+            result, 
+            status=status.HTTP_200_OK
+        )
+
+
