@@ -42,12 +42,12 @@ class ShiftPolicyListCreateView(generics.ListCreateAPIView):
             # raise ParseError(detail="The 'policy_id' query parameter is required.")
             # For now, we return an empty queryset:
             return ShiftPolicy.objects.none()
-        return ShiftPolicy.objects.filter(policy_id=policy_id).order_by("shift_index")
+        return ShiftPolicy.objects.filter(policy_id=policy_id).order_by("start_time")
 
 class ShiftPolicyDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET: Retrieve a shift detail.
-    PUT: Update a shift detail (e.g. change start_time, end_time, or shift_index).
+    PUT: Update a shift detail (e.g. change start_time, end_time).
     DELETE: Remove a shift detail.
     """
     queryset = ShiftPolicy.objects.all()

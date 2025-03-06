@@ -42,7 +42,7 @@ class ScheduleComputeWithPolicyShiftsAPIView(APIView):
     }
     
     This view performs:
-      - Query shift details (start_time, end_time, shift_index) for the policy.
+      - Query shift details (start_time, end_time) for the policy.
       - For each day in the date range, check employee availability.
       - Organize the queried data and pass it to the scheduling algorithm.
     """
@@ -78,11 +78,10 @@ class ScheduleComputeWithPolicyShiftsAPIView(APIView):
             )
         
         # Query shift details from ShiftPolicyDetail.
-        shift_details_qs = ShiftPolicy.objects.filter(policy_id=policy_id).order_by("shift_index")
+        shift_details_qs = ShiftPolicy.objects.filter(policy_id=policy_id).order_by("start_time")
         shift_info = []
         for detail in shift_details_qs:
             shift_info.append({
-                "shift_index": detail.shift_index,
                 "start_time": detail.start_time.strftime("%H:%M:%S"),
                 "end_time": detail.end_time.strftime("%H:%M:%S")
             })
@@ -150,13 +149,11 @@ class ConfirmScheduleAPIView(APIView):
                  "date": "2024-12-01",
                  "shift_assignments": [
                       {
-                          "shift_index": 1,
                           "start_time": "09:00:00",
                           "end_time": "13:00:00",
                           "assigned_employees": [101, 103]
                       },
                       {
-                          "shift_index": 2,
                           "start_time": "13:00:00",
                           "end_time": "17:00:00",
                           "assigned_employees": [102]
@@ -191,16 +188,15 @@ class ConfirmScheduleAPIView(APIView):
                 continue
             shift_assignments = day.get("shift_assignments", [])
             for assignment in shift_assignments:
-                shift_index = assignment.get("shift_index")
                 start_time = assignment.get("start_time")
                 end_time = assignment.get("end_time")
                 assigned_employees = assignment.get("assigned_employees", [])
                 
-                if not all([shift_index, start_time, end_time]):
+                if not all([start_time, end_time]):
                     continue
                 
                 schedule_record = Schedule.objects.create(
-                    name=f"Policy {policy_id} Shift #{shift_index} on {date_str}",
+                    name=f"Policy {policy_id}  on {date_str}",
                     description="Persisted from confirmed computed schedule.",
                     start_date=date_str,
                     start_time=start_time,

@@ -6,7 +6,7 @@ def process_schedule(queried_data):
     
     queried_data is a dict with:
       - 'shift_info': a list of shift detail dicts, each containing:
-            { "shift_index": int, "start_time": "HH:MM:SS", "end_time": "HH:MM:SS" }
+            { "start_time": "HH:MM:SS", "end_time": "HH:MM:SS" }
       - 'daily_availability': a list (one per day) of dicts with:
             {
               "date": "YYYY-MM-DD",
@@ -39,7 +39,6 @@ def process_schedule(queried_data):
         for shift in shift_info:
             # Dummy assignment: assign all available employees to each shift.
             day_schedule["shift_assignments"].append({
-                "shift_index": shift["shift_index"],
                 "start_time": shift["start_time"],
                 "end_time": shift["end_time"],
                 "assigned_employees": day_data["available_employees"]

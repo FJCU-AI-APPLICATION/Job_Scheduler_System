@@ -30,7 +30,6 @@ class ShiftPolicy(models.Model):
         on_delete=models.CASCADE,
         related_name='shift_details'
     )
-    shift_index = models.PositiveIntegerField()
     start_time = models.TimeField()
     end_time = models.TimeField()
 
@@ -38,4 +37,4 @@ class ShiftPolicy(models.Model):
         db_table = 'ShiftPolicyDetail'
 
     def __str__(self):
-        return f"Policy: {self.policy.policy_name}, Shift #{self.shift_index}"
+        return f"Policy: {self.policy.policy_name}"
