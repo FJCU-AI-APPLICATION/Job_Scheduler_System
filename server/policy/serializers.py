@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from policy.models import AiModel, ShiftPolicy, ShiftPolicyDetail
+from policy.models import AiModel, Policy, ShiftPolicy
 
 class AiModelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,9 +7,9 @@ class AiModelSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShiftPolicyDetailSerializer(serializers.ModelSerializer):
+class PolicySerializer(serializers.ModelSerializer):
     class Meta:
-        model = ShiftPolicyDetail
+        model = Policy
         fields = '__all__'
 
 
@@ -17,8 +17,8 @@ class ShiftPolicySerializer(serializers.ModelSerializer):
     # Nested or primary key representation for AI model
     
     # Optionally embed the shift details as nested
-    shift_details = ShiftPolicyDetailSerializer(many=True, read_only=True)
+    shift_details = PolicySerializer(many=True, read_only=True)
 
     class Meta:
         model = ShiftPolicy
-        fields = ['id', 'policy_name', 'description', 'shift_details']
+        fields = '__all__'

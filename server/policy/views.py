@@ -2,12 +2,11 @@
 from rest_framework import generics
 from policy.models import AiModel, Policy, ShiftPolicy
 from rest_framework import generics
-from policy.serializers import ShiftPolicyDetailSerializer
 
 from policy.serializers import (
     AiModelSerializer, 
     ShiftPolicySerializer, 
-    ShiftPolicyDetailSerializer
+    PolicySerializer
 )
 
 class AiModelListCreateView(generics.ListCreateAPIView):
@@ -19,21 +18,21 @@ class AiModelDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AiModelSerializer
 
 class PolicyListCreateView(generics.ListCreateAPIView):
-    queryset = ShiftPolicy.objects.all()
-    serializer_class = ShiftPolicySerializer
+    queryset = Policy.objects.all()
+    serializer_class = PolicySerializer
 
 class PolicyDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = ShiftPolicy.objects.all()
-    serializer_class = ShiftPolicySerializer
+    queryset = Policy.objects.all()
+    serializer_class = PolicySerializer
 
 
-class ShiftPolicyDetailListCreateView(generics.ListCreateAPIView):
+class ShiftPolicyListCreateView(generics.ListCreateAPIView):
     """
     GET: List all shift details for a given policy.
          Requires the query parameter 'policy_id'.
     POST: Create a new shift detail.
     """
-    serializer_class = ShiftPolicyDetailSerializer
+    serializer_class = ShiftPolicySerializer
 
     def get_queryset(self):
         policy_id = self.request.query_params.get('policy_id')
@@ -45,12 +44,12 @@ class ShiftPolicyDetailListCreateView(generics.ListCreateAPIView):
             return ShiftPolicy.objects.none()
         return ShiftPolicy.objects.filter(policy_id=policy_id).order_by("shift_index")
 
-class ShiftPolicyDetailDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ShiftPolicyDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET: Retrieve a shift detail.
     PUT: Update a shift detail (e.g. change start_time, end_time, or shift_index).
     DELETE: Remove a shift detail.
     """
     queryset = ShiftPolicy.objects.all()
-    serializer_class = ShiftPolicyDetailSerializer
+    serializer_class = ShiftPolicySerializer
 

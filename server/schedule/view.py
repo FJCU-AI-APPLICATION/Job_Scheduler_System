@@ -1,14 +1,13 @@
 from rest_framework import generics, pagination
-from server.schedule.models import Schedule
 from schedule.serializer import ScheduleSerializer
 from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from policy.models import ShiftPolicyDetail
+from policy.models import ShiftPolicy
 from employee.model import EmployeeUnavailability
 from datetime import datetime
-from server.schedule.models import Schedule, ScheduleEmployee
+from schedule.models import Schedule, ScheduleEmployee
 from schedule.algorithms import process_schedule
 
 class SchedulePagination(pagination.PageNumberPagination):
@@ -79,7 +78,7 @@ class ScheduleComputeWithPolicyShiftsAPIView(APIView):
             )
         
         # Query shift details from ShiftPolicyDetail.
-        shift_details_qs = ShiftPolicyDetail.objects.filter(policy_id=policy_id).order_by("shift_index")
+        shift_details_qs = ShiftPolicy.objects.filter(policy_id=policy_id).order_by("shift_index")
         shift_info = []
         for detail in shift_details_qs:
             shift_info.append({
