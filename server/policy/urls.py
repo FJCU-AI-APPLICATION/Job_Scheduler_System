@@ -2,10 +2,10 @@ from django.urls import path
 from policy.views import (
     AiModelListCreateView,
     AiModelDetailView,
-    ShiftPolicyListCreateView,
+    PolicyListCreateView,
+    PolicyDetailView,
     ShiftPolicyDetailView,
-    ShiftPolicyDetailListCreateView,
-    ShiftPolicyDetailDetailView
+    ShiftPolicyListCreateView,
 )
 
 urlpatterns = [
@@ -13,11 +13,11 @@ urlpatterns = [
     path('aimodels/', AiModelListCreateView.as_view(), name='aimodel-list-create'),
     path('aimodels/<int:pk>/', AiModelDetailView.as_view(), name='aimodel-detail'),
 
-    # Shift Policy
-    path('', ShiftPolicyListCreateView.as_view(), name='shiftpolicy-list-create'),
-    path('<int:pk>/', ShiftPolicyDetailView.as_view(), name='shiftpolicy-detail'),
+    # Policy
+    path('', PolicyListCreateView.as_view(), name='policy-list-create'),
+    path('<int:pk>/', PolicyDetailView.as_view(), name='policy-detail'),
 
-    # Shift Policy Detail
-    path('shiftpolicydetails/', ShiftPolicyDetailListCreateView.as_view(), name='shiftpolicydetail-list-create'),
-    path('shiftpolicydetails/<int:pk>/', ShiftPolicyDetailDetailView.as_view(), name='shiftpolicydetail-detail'),
+    # Shift Policy
+    path('shiftpolicy/', ShiftPolicyListCreateView.as_view(), name='shiftpolicy-list-create'),
+    path('shiftpolicy/<int:pk>/', ShiftPolicyDetailView.as_view(), name='shiftpolicy-detail'),
 ]

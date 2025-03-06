@@ -159,7 +159,6 @@ CREATE TABLE ShiftPolicy (
 CREATE TABLE ShiftPolicyDetail (
     id BIGINT IDENTITY(1,1) NOT NULL,
     policy_id BIGINT NOT NULL,
-    shift_index INT NOT NULL,         -- 1,2,3,... for shift ordering
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     PRIMARY KEY (id),

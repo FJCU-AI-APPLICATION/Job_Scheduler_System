@@ -13,7 +13,7 @@ class AiModel(models.Model):
         return f"{self.model_name} ({self.model_version})"
 
 
-class ShiftPolicy(models.Model):
+class Policy(models.Model):
     policy_name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
 
@@ -24,13 +24,12 @@ class ShiftPolicy(models.Model):
         return f"{self.policy_name}"
 
 
-class ShiftPolicyDetail(models.Model):
+class ShiftPolicy(models.Model):
     policy = models.ForeignKey(
-        ShiftPolicy,
+        Policy,
         on_delete=models.CASCADE,
         related_name='shift_details'
     )
-    shift_index = models.PositiveIntegerField()
     start_time = models.TimeField()
     end_time = models.TimeField()
 
@@ -38,4 +37,4 @@ class ShiftPolicyDetail(models.Model):
         db_table = 'ShiftPolicyDetail'
 
     def __str__(self):
-        return f"Policy: {self.policy.policy_name}, Shift #{self.shift_index}"
+        return f"Policy: {self.policy.policy_name}"
