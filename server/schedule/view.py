@@ -64,7 +64,7 @@ class ScheduleComputeWithPolicyShiftsAPIView(APIView):
         # Parse dates.
         try:
             start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            end_date   = datetime.strptime(end_date_str, "%Y-%m-%d").date()
         except Exception:
             return Response(
                 {"error": "Invalid date format. Use YYYY-MM-DD."},

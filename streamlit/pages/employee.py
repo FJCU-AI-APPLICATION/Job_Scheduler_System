@@ -2,11 +2,47 @@ import streamlit as st
 import requests
 import pandas as pd
 
-API_BASE_URL = "http://127.0.0.1:8000/api"  # Adjust to your Django server
+
+API_BASE_URL = "http://127.0.0.1:8000/api/employee"  # adjust as needed
+
+def fetch_employee_full_detail(emp_id, start_date=None, end_date=None):
+    params = {"employee_id": emp_id}
+    if start_date:
+        params["start_date"] = start_date
+    if end_date:
+        params["end_date"] = end_date
+    try:
+        response = requests.get(f"{API_BASE_URL}/full_detail/", params=params)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Error fetching employee details: {e}")
+        return None
+
+def render_employee_full_detail(emp_id):
+    st.write(f"Fetching full details for Employee #{emp_id}")
+    data = fetch_employee_full_detail(emp_id)
+    if data:
+        st.write("### Employee Information")
+        st.json(data.get("employee"))
+        
+        st.write("### Unavailability")
+        unavail_df = pd.DataFrame(data.get("unavailability"))
+        st.table(unavail_df)
+        
+        st.write("### Shift Assignments")
+        shifts_df = pd.DataFrame(data.get("shift_assignments"))
+        st.table(shifts_df)
+
+# Example usage in Streamlit
+selected_employee = st.selectbox("Select Employee ID", [1, 2, 3])
+if st.button("Show Full Details"):
+    render_employee_full_detail(selected_employee)
+
 
 def fetch_employees():
     try:
-        response = requests.get(f"{API_BASE_URL}/employee/")
+        response = requests.get(f"{API_BASE_URL}/")
         response.raise_for_status()
         return response.json()  # Expecting a list of employees
     except Exception as e:

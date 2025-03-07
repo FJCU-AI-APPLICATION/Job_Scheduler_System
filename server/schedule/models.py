@@ -8,8 +8,7 @@ class Schedule(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
     start_date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+    end_date = models.DateField()
     manager = models.ForeignKey(
         Employee,
         on_delete=models.CASCADE, 
