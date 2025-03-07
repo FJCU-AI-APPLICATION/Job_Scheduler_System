@@ -1,10 +1,12 @@
 // import 'bootstrap/dist/css/bootstrap.min.css';  // 引入 Bootstrap 樣式
 // import 'bootstrap-icons/font/bootstrap-icons.css'; // 引入 Bootstrap Icon
 // import 'bootstrap';  // 可選，載入 Bootstrap JS（如果有互動功能）
+import { fetchEmployees } from "./apiClient.js"
 
-
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM 已經載入完成！");
+
+    // 漢堡選單測試
     const sidebar = document.getElementById("Sidebar");
     const toggleButton = document.createElement("button");
 
@@ -20,6 +22,57 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.body.appendChild(toggleButton);
 
+
+    // 動態產生表格
+    const table = document.getElementById("employeeTable");
+    const tableHead = document.querySelector("#employeeTable thead tr");
+    const tableBody = document.querySelector("#employeeTable tbody");
+
+    if (!table || !tableHead || !tableBody) {
+        console.error("找不到表格結構，請確認 HTML 結構！");
+        return;
+    }
+
+    try {
+        const { employees } = await fetchEmployees();  // 呼叫 API 獲取員工資料
+        console.log("收到員工的資料", employees);
+
+
+        if (!Array.isArray(employees) || employees.length === 0) {
+            console.error("employees不是陣列，無法處理", employees);
+            return;
+        }
+
+        // 取得 `results` 第一筆資料的 `keys` 作為表頭
+        const keys = Object.keys(employees[0]);
+        console.log("表頭 keys:", keys);
+
+        // 先清空原本的表頭，避免重複生成
+        tableHead.innerHTML = "";
+        tableBody.innerHTML = "";
+
+        // 動態產生<th>表頭
+        keys.forEach(key => {
+            const th = document.createElement("th");
+            th.textContent = key;
+            tableHead.appendChild(th);
+        })
+
+        // 動態產生員工資料<td>
+        employees.forEach(employee => {
+            const row = document.createElement("tr");
+            keys.forEach(key => {
+                const td = document.createElement("td");
+                td.textContent = employee[key];
+                row.appendChild(td);
+            });
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error("載入員工資料失敗:", error);
+    }
+
+    // 導覽列選單
     if (sidebar) {
         toggleButton.addEventListener("click", function () {
             sidebar.classList.toggle("active");
