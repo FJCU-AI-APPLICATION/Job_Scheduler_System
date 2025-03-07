@@ -2,7 +2,7 @@
 
 
 
-const API_URL = "http://211.20.21.35:8002/api/employee/";
+
 // const API_URL = "/api/employee/"; // 透過代理請求
 
 async function fetchEmployees_2() {
