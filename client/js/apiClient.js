@@ -4,7 +4,11 @@
 // const API_URL = "https://cors-anywhere.herokuapp.com/http://xxx.xx.xx.xx:8002/api/employee/";
 const API_URL = "http://localhost:8080/http://211.xx.xx.xx:8002/api/employee/";
 
+<<<<<<< HEAD
 // const API_URL = "http://xxx.xx.xx.xx:8002/api/employee/";
+=======
+
+>>>>>>> 9c27985883b18b7cb8a63bb515ab0b3617804088
 // const API_URL = "/api/employee/"; // 透過代理請求
 
 async function fetchEmployees_2() {
