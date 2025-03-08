@@ -2,7 +2,7 @@
 
 
 // const API_URL = "https://cors-anywhere.herokuapp.com/http://xxx.xx.xx.xx:8002/api/employee/";
-const API_URL = "http://localhost:8080/http://xxx.xx.xx.xx:8002/api/employee/";
+const API_URL = "http://localhost:8080/http://210.xx.xx.xx:8002/api/employee/";
 
 // const API_URL = "http://xxx.xx.xx.xx:8002/api/employee/";
 // const API_URL = "/api/employee/"; // 透過代理請求
