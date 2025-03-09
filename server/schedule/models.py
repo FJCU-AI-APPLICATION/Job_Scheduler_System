@@ -7,15 +7,15 @@ from employee.model import Employee
 class Schedule(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
-    start_date = models.DateField()
-    end_date = models.DateField()
-    manager = models.ForeignKey(
-        Employee,
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True,
-        related_name="managed_schedules"
-    )
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    # manager = models.ForeignKey(
+    #     Employee,
+    #     on_delete=models.CASCADE, 
+    #     null=True, 
+    #     blank=True,
+    #     related_name="managed_schedules"
+    # )
 
     class Meta:
         db_table = "Schedule"
