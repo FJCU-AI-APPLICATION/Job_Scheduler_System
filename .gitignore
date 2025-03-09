@@ -6,11 +6,18 @@ server/employee/__pycache__
 server/schedule/migrations
 server/schedule/__pycache__
 server/employee/migrations
-server/app/__pycache__
+server/policy/migrations
+server/policy/__pycache__
+
 #AI
 AI/__pycache__
 AI/venv
 AI/RL/__pycache__
-#frontend
-client/envs
-client/js/test.js
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
