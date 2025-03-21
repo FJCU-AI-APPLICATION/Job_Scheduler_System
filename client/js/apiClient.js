@@ -1,6 +1,6 @@
 const API_URL = "http://localhost:8080/http://xxx.xx.xx.xx:8002/api/employee/";
 
-async function fetchEmployees() {
+export async function fetchEmployees_2() {
     try {
         console.log(`Fetching: ${API_URL}`);
         

@@ -14,70 +14,72 @@
     <div id="app"></div>
     <div class="container">
         <div class="sidebar">
-            <ul>
-                <li><a href="#schedule-view" class="active">班表查詢</a></li>
-                <li><a href="#schedule-planning">排班</a></li>
-                <li><a href="#">請假查詢</a></li>
-                <li><a href="#">未打卡統計</a>
-                    <ul>
-                        <li><a href="#"><i class="icon">📋</i>未上班統計</a></li>
-                        <li><a href="#"><i class="icon">📝</i>請假統計</a></li>
-                        <li><a href="#"><i class="icon">🌴</i>休假統計</a></li>
-                        <li><a href="#"><i class="icon">📚</i>訓練紀錄</a></li>
-                    </ul>
-                </li>
-                <li><a href="#">我的帳號</a></li>
-                <li><a href="#">登出</a></li>
-            </ul>
+            <img sec="" alt="我是圖片">
+            <div class="top-section">
+                <ul>
+                    <li><a href="#schedule-view" class="active">班表查詢</a></li>
+                    <li><a href="#schedule-planning">排班</a></li>
+                    <li><a href="#schedule-setting">設定</a></li>
+                </ul>
+            </div>
+            <div class="bottom-section">
+                <ul>
+                    <li><a href="#">我的帳號</a></li>
+                    <li><a href="#">登出</a></li>
+                </ul>  
+            </div>
         </div>
 
         <div class="main">
             <!-- 班表查詢 畫面-->
             <div id="schedule-view" class="active">
                 <h1>班表查詢</h1>
-                <div class="header">
-                    <div>
-                        <select id="year">
-                            <option>2023</option>
-                            <option>2024</option>
-                            <option>2025</option>
-                        </select>
-                        <label for="year">年</label>
-
-                        <select id="month">
-                            <option>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                            <option>4</option>
-                            <option>5</option>
-                            <option>6</option>
-                            <option>7</option>
-                            <option>8</option>
-                            <option>9</option>
-                            <option>10</option>
-                            <option>11</option>
-                            <option>12</option>
-                            <!-- Add more months as needed -->
-                        </select>
-                        <label for="month">月</label>
-                    </div>
+                <div class="date-group">
+                    <select class="year">
+                        <option value="" disabled selected>年</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                    </select>
+                    <select class="month">
+                        <option value="" disabled selected>月</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>                        
+                    </select>
+                </div>
+                <div class="query-group">
                     <div>
                         <label for="start-date">起始日期</label>
                         <input type="date" id="start-date">
+                    </div>
+                    <div>
                         <label for="end-date">結束日期</label>
                         <input type="date" id="end-date">
-                        <button class="search">查詢</button>
-                        <button class="reset">匯出</button>
                     </div>
+                    <button id="btn_search">查詢</button>
+                    <button id="btn_export">匯出</button>
                 </div>
-                <table id="employeeTable">
-                    <thead>
-                        <tr></tr>
-                    </thead>                    
-                    <tbody>
-                        <!---->
-                    </tbody>
-                </table>                
+
+                <div class="table-wrapper">
+                    <table id="employeeTable">
+                        <thead>
+                            <tr></tr>
+                        </thead>                    
+                        <tbody>
+                            <!---->
+                        </tbody>
+                    </table>                
+                </div>
             </div>
 
             <!-- 排班 畫面 -->
@@ -85,87 +87,135 @@
                 <h1>排班</h1>
                 <div class="date-group">
                     <label>時間</label>
-                    <div class="date-group-2">
-                        <div class="date-group-3-1">
-                            <select id="year">
-                                <option>2023</option>
-                                <option>2024</option>
-                                <option>2025</option>
-                            </select>
-                            <label for="year">年</label>
-
-                            <select id="month">
-                                <option>1</option>
-                                <option>2</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
-                                <option>6</option>
-                                <option>7</option>
-                                <option>8</option>
-                                <option>9</option>
-                                <option>10</option>
-                                <option>11</option>
-                                <option>12</option>
-                                <!-- Add more months as needed -->
-                            </select>
-                            <label for="month">月</label>
+                    <div class="date-input">
+                        <div>
+                            <label for="start-date">起始日期</label>
+                            <input type="date" id="start-date">
                         </div>
 
-                        <div class="date-group-3-2">
-                            <div>
-                                <label for="start-date">起始日期</label>
-                                <input type="date" id="start-date">
-                            </div>
-
-                            <div>
-                                <label for="end-date">結束日期</label>
-                                <input type="date" id="end-date">
-                            </div>
-
-                            <div>
-                                <button class="confirm">確認</button>
-                            </div>
+                        <div>
+                            <label for="end-date">結束日期</label>
+                            <input type="date" id="end-date">
                         </div>
+
+                        <button class="confirm">確認</button>
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label>安排</label>
-                    <div class="form-group-2">
-                        <div class="form-group-2 member-group">
-                            <label for="member">當前成員</label>
-                            <select id="member">
-                                <option>成員1</option>
-                                <option>成員2</option>
-                                <option>成員3</option>
-                            </select>
+                <div class="arrange-group">
+                    <label>安排</label> 
+                    <div class="arrange-input">
+                        <div class="main-field">
+                            <div class="member-field">
+                                <label for="member">當前成員</label>
+                                <div>
+                                    <select id="member">
+                                        <option>成員1</option>
+                                        <option>成員2</option>
+                                        <option>成員3</option>
+                                    </select>
+                                </div>
+                            </div>
+    
+                            <div class="vacation-field">
+                                <label for="vacation">休假選擇</label>
+                                <div>
+                                    <input type="text" id="vacation" placeholder="輸入休假類型">
+                                    <button>選填</button>
+                                </div>
+                            </div>
+    
+                            <div class="checkbox-field">
+                                <label>班別選擇</label>
+                                <div>
+                                    <label><input type="checkbox" value="first"> 第一班</label>
+                                    <label><input type="checkbox" value="second"> 第二班</label>
+                                    <label><input type="checkbox" value="third"> 第三班</label>
+                                    <label><input type="checkbox" value="fourth"> 第四班</label>
+                                    <label></label>
+                                    <label></label>
+                                    <label></label>
+                                    <label></label>
+                                </div>
+                            </div>                                                        
                         </div>
-
-                        <div class="form-group-2 vacation-group">
-                            <label for="vacation">休假選擇</label>
-                            <input type="text" id="vacation" placeholder="輸入休假類型">
-                        </div>
-
-                        <div class="form-group-2 checkbox-group">
-                            <label>班別選擇</label>
-                            <label><input type="checkbox" value="morning"> 早班</label>
-                            <label><input type="checkbox" value="afternoon"> 午班</label>
-                            <label><input type="checkbox" value="evening"> 晚班</label>
-                            <label><input type="checkbox" value="night"> 大夜班</label>
-                            <label><input type="checkbox" value="shift"> 可輪班</label>
-                        </div>                        
                     </div>
                 </div>
 
                 <div class="additions-group">
-                    <button class="cross">十</button>
+                    <button class="cross">+</button>
                 </div>
 
                 <!-- 操作按鈕 -->
                 <div class="actions-group">
-                    <button class="arrange">AI排班</button>
-                    <button class="export">匯出</button>
+                    <button class="btn_arrange">AI排班</button>
+                    <button class="btn_export">匯出</button>
+                </div>
+            </div>
+
+            <!-- 班表查詢 畫面-->
+            <div id="schedule-setting">
+                <h1>設定</h1>
+                <div class="shiftSet-group">
+                    <div class="title-field">班別設定</div>
+                    <div class="table-field">
+                        <table>
+                            <thead>
+                                <th>head</th>
+                                <th>head</th>
+                                <th>head</th>
+                                <th>head</th>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="memberSet-group">
+                    <div class="title-field">成員設定</div>
+                    <div class="button-field">
+                        <div></div>
+                        <button id="btn_search">查詢</button>
+                        <button id="btn_export">匯出</button>
+                        <button id="btn_add">+新增成員</button>
+                    </div>
+                    <div class="table-field">
+                        <table>
+                            <thead>
+                                <th>項次</th>
+                                <th>姓名</th>
+                                <th>年齡</th>
+                                <th>電話</th>
+                                <th>身分別</th>
+                                <th>薪別</th>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>王大明</td>
+                                    <td>30</td>
+                                    <td>123566</td>
+                                    <td>正職</td>
+                                    <td>月薪</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>李大郎</td>
+                                    <td>40</td>
+                                    <td>12356688</td>
+                                    <td>兼職</td>
+                                    <td>時薪</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>         
                 </div>
             </div>
         </div>

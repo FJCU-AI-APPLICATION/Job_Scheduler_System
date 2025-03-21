@@ -23,54 +23,74 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.body.appendChild(toggleButton);
 
 
-    // 動態產生表格
-    const table = document.getElementById("employeeTable");
-    const tableHead = document.querySelector("#employeeTable thead tr");
-    const tableBody = document.querySelector("#employeeTable tbody");
-
-    if (!table || !tableHead || !tableBody) {
-        console.error("找不到表格結構，請確認 HTML 結構！");
+    
+    // 綁定查詢按鈕
+    const searchButton = document.getElementById("btn_search");
+    if (!searchButton) {
+        console.error("找不到 #btn_search 按鈕，請確認 HTML 結構！");
         return;
     }
 
-    try {
-        const { employees } = await fetchEmployees_2();  // 呼叫 API 獲取員工資料
-        console.log("收到員工的資料", employees);
+    searchButton.addEventListener("click", async () => {
+        console.log("🔍 查詢按鈕被點擊，開始獲取員工資料...");
 
+        // 動態產生表格的函式
+        await generateEmployeeTable();
+    });
 
-        if (!Array.isArray(employees) || employees.length === 0) {
-            console.error("employees不是陣列，無法處理", employees);
+    
+    // **將表格生成的邏輯封裝成函式**
+    async function generateEmployeeTable() {
+
+        // 動態產生表格
+        const table = document.getElementById("employeeTable");
+        const tableHead = document.querySelector("#employeeTable thead tr");
+        const tableBody = document.querySelector("#employeeTable tbody");
+
+        if (!table || !tableHead || !tableBody) {
+            console.error("找不到表格結構，請確認 HTML 結構！");
             return;
         }
 
-        // 取得 `results` 第一筆資料的 `keys` 作為表頭
-        const keys = Object.keys(employees[0]);
-        console.log("表頭 keys:", keys);
+        try {
+            const { employees } = await fetchEmployees_2();  // 呼叫 API 獲取員工資料
+            console.log("收到員工的資料", employees);
 
-        // 先清空原本的表頭，避免重複生成
-        tableHead.innerHTML = "";
-        tableBody.innerHTML = "";
 
-        // 動態產生<th>表頭
-        keys.forEach(key => {
-            const th = document.createElement("th");
-            th.textContent = key;
-            tableHead.appendChild(th);
-        })
+            if (!Array.isArray(employees) || employees.length === 0) {
+                console.error("employees不是陣列，無法處理", employees);
+                return;
+            }
 
-        // 動態產生員工資料<td>
-        employees.forEach(employee => {
-            const row = document.createElement("tr");
+            // 取得 `results` 第一筆資料的 `keys` 作為表頭
+            const keys = Object.keys(employees[0]);
+            console.log("表頭 keys:", keys);
+
+            // 先清空原本的表頭，避免重複生成
+            tableHead.innerHTML = "";
+            tableBody.innerHTML = "";
+
+            // 動態產生<th>表頭
             keys.forEach(key => {
-                const td = document.createElement("td");
-                td.textContent = employee[key];
-                row.appendChild(td);
+                const th = document.createElement("th");
+                th.textContent = key;
+                tableHead.appendChild(th);
+            })
+
+            // 動態產生員工資料<td>
+            employees.forEach(employee => {
+                const row = document.createElement("tr");
+                keys.forEach(key => {
+                    const td = document.createElement("td");
+                    td.textContent = employee[key];
+                    row.appendChild(td);
+                });
+                tableBody.appendChild(row);
             });
-            tableBody.appendChild(row);
-        });
-    } catch (error) {
-        console.error("載入員工資料失敗:", error);
-    }
+        } catch (error) {
+            console.error("載入員工資料失敗:", error);
+        }
+    };
 
     // 導覽列選單
     if (sidebar) {
