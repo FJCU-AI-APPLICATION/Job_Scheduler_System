@@ -1,4 +1,4 @@
-@api_server = http://127.0.0.1:8000/api/employee/
+@api_server = http://127.0.0.1:8002/api/employee/
 POST {{api_server}} HTTP/1.1
 content-type: application/json
 
