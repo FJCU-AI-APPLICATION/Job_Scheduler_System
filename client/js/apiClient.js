@@ -3,9 +3,9 @@ import { API_URL } from "./env.js";
 
 export async function fetchEmployees_2() {
     try {
-        console.log(`Fetching: ${API_URL}employee/`);
+        console.log(`Fetching: ${API_URL}/employee/`);
         
-        const response = await fetch(API_URL + "/employee/");
+        const response = await fetch(`${API_URL}/employee/`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -29,7 +29,7 @@ export async function fetchEmployees_2() {
         return {headers, employees: data.results};
     } catch (error) {
         console.error("Error fetching employees:", error);
-        return {headers, employees: []};
+        return {headers: {}, employees: []};
     }
 }
 
