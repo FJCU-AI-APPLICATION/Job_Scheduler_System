@@ -28,5 +28,7 @@ RUN pip install -U pip
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-EXPOSE 8000
+
 CMD exec gunicorn apps.wsgi:application --bind 0.0.0.0:8000 --workers 10
+
+EXPOSE 8000

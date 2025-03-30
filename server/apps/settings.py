@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'employee',
     'schedule',
     'rest_framework',
-    'policy'
+    'policy',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -59,7 +60,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
+
+
+# CORS 設定區
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5500',
+    'http://127.0.0.1:5500'
+]
+
 
 ROOT_URLCONF = 'apps.urls'
 
