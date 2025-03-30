@@ -1,6 +1,6 @@
 #frontend
 client/test.http
-client/js/.env.js
+client/js/env.js
 client/js/test.js
 
 #backend
