@@ -1,3 +1,6 @@
+#frontend
+client/js/.env.js
+
 #backend
 server/venv
 server/envs
