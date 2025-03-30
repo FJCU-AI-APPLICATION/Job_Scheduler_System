@@ -21,6 +21,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
 WORKDIR /usr/src
 
 COPY . .
+COPY ./envs ./envs
 RUN ls
 
 RUN pip install -U pip
@@ -28,4 +29,4 @@ RUN pip install -U pip
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8000
-CMD exec gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 10
+CMD exec gunicorn apps.wsgi:application --bind 0.0.0.0:8000 --workers 10

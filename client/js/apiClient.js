@@ -1,10 +1,11 @@
-const API_URL = "http://localhost:8080/http://xxx.xx.xx.xx:8002/api/employee/";
+// import env.js
+import { API_URL } from "./env.js";
 
 export async function fetchEmployees_2() {
     try {
-        console.log(`Fetching: ${API_URL}`);
+        console.log(`Fetching: ${API_URL}employee/`);
         
-        const response = await fetch(API_URL);
+        const response = await fetch(API_URL + "/employee/");
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
