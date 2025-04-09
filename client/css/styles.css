@@ -223,7 +223,7 @@ th {
     cursor: pointer;
 }
 
-#schedule-view .query-group #btn_search {
+#schedule-view .query-group #btn_search_schedule {
     background-color: purple;
 }
 
@@ -660,7 +660,7 @@ th {
     /* border: 1px solid red; */
 }
 
-#schedule-setting .memberSet-group .button-field div {
+#schedule-setting .memberSet-group .button-field span {
     flex: 1;
 }
 
@@ -682,6 +682,37 @@ th {
 #schedule-setting .memberSet-group .button-field button:hover {
     opacity: 0.8;
 }
+
+#schedule-setting .memberSet-group .table-field {
+    display:block;
+    width:100%;
+}
+
+#schedule-setting .memberSet-group .table-field .table-wrapper {
+    display:block;
+    width:100%;
+    margin-bottom:10px;
+}
+
+#schedule-setting .memberSet-group .table-field .table-wrapper table {
+    margin: auto;
+}
+
+#schedule-setting .memberSet-group .table-field .table-button span {
+    flex:1;
+}
+
+#schedule-setting .memberSet-group .table-field .table-button button {
+    display: none;
+    white-space:nowrap;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
 
 #schedule-setting table {
     width: 90%;

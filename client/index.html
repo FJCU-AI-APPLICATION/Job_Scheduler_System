@@ -66,12 +66,12 @@
                         <label for="end-date">結束日期</label>
                         <input type="date" id="end-date">
                     </div>
-                    <button id="btn_search">查詢</button>
+                    <button id="btn_search_schedule">查詢</button>
                     <button id="btn_export">匯出</button>
                 </div>
 
                 <div class="table-wrapper">
-                    <table id="employeeTable">
+                    <table id="employeeTable_2">
                         <thead>
                             <tr></tr>
                         </thead>                    
@@ -181,41 +181,28 @@
                 <div class="memberSet-group">
                     <div class="title-field">成員設定</div>
                     <div class="button-field">
-                        <div></div>
-                        <button id="btn_search">查詢</button>
+                        <span></span>                        
+                        <button id="btn_search_member">查詢</button>
                         <button id="btn_export">匯出</button>
                         <button id="btn_add">+新增成員</button>
                     </div>
                     <div class="table-field">
-                        <table>
-                            <thead>
-                                <th>項次</th>
-                                <th>姓名</th>
-                                <th>年齡</th>
-                                <th>電話</th>
-                                <th>身分別</th>
-                                <th>薪別</th>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>王大明</td>
-                                    <td>30</td>
-                                    <td>123566</td>
-                                    <td>正職</td>
-                                    <td>月薪</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>李大郎</td>
-                                    <td>40</td>
-                                    <td>12356688</td>
-                                    <td>兼職</td>
-                                    <td>時薪</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>         
+                        <div class="table-wrapper">
+                            <table id ="employeeTable">
+                                <thead>
+                                    <tr></tr>
+                                </thead>                    
+                                <tbody>
+                                    <!---->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class = "table-button">
+                            <span></span>
+                            <button id="prevPageBtn">上一頁</button>
+                            <button id="nextPageBtn">下一頁</button>                
+                        </div>
+                    </div>       
                 </div>
             </div>
         </div>

@@ -1,24 +1,30 @@
 // import env.js
 import { API_URL } from "./env.js";
 
-export async function fetchEmployees_2() {
+
+export async function fetchEmployees_2(url=`${API_URL}/api/employee/`) {
     try {
-        console.log(`Fetching: ${API_URL}/employee/`);
-        
-        const response = await fetch(`${API_URL}/employee/`);
+        console.log(`Fetching: ${url}`);
+
+        const response = await fetch(`${url}`);
+
         if (!response.ok) {
+            const errorText = await response.text(); // 讀取 HTML 錯誤頁
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
         // 取得回應的表頭 (Headers)
         const headers = {};
+
         response.headers.forEach((value, name) => {
             headers[name] = value;
         });
 
         const data = await response.json();
-        console.log("API 回傳資料:", data);
+
         console.log("API 回傳表頭:", headers);
+        console.log("API 回傳資料:", data);
+        
 
         // 確保回傳的是陣列
         if (!Array.isArray(data.results)) {
@@ -26,10 +32,23 @@ export async function fetchEmployees_2() {
             return {headers, employees: []}; // 回傳空陣列，避免forEach錯誤
         }
 
-        return {headers, employees: data.results};
+        // 轉換 next / previous 成相對路徑
+        const parsedNext = data.next ? new URL(data.next) : null;
+        const parsedPrev = data.previous ? new URL(data.previous) : null;
+        
+        const nextPath = parsedNext ? parsedNext.pathname + parsedNext.search : null;
+        const prevPath = parsedPrev ? parsedPrev.pathname + parsedPrev.search : null;
+
+        return {
+            headers,
+            employees: data.results,
+            next: nextPath,
+            previous: prevPath
+        };
+
     } catch (error) {
         console.error("Error fetching employees:", error);
-        return {headers: {}, employees: []};
+        return {headers: {}, employees: [], next: null, previous: null};
     }
 }
 

@@ -2,6 +2,7 @@
 // import 'bootstrap-icons/font/bootstrap-icons.css'; // 引入 Bootstrap Icon
 // import 'bootstrap';  // 可選，載入 Bootstrap JS（如果有互動功能）
 import { fetchEmployees_2 } from "./apiClient.js"
+import { API_URL } from "./env.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM 已經載入完成！");
@@ -25,22 +26,40 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     
     // 綁定查詢按鈕
-    const searchButton = document.getElementById("btn_search");
+    const searchButton = document.getElementById("btn_search_member");
+
     if (!searchButton) {
-        console.error("找不到 #btn_search 按鈕，請確認 HTML 結構！");
+        console.error("找不到 #btn_search_member 按鈕，請確認 HTML 結構！");
         return;
     }
 
     searchButton.addEventListener("click", async () => {
         console.log("🔍 查詢按鈕被點擊，開始獲取員工資料...");
-
         // 動態產生表格的函式
         await generateEmployeeTable();
     });
 
     
+    let currentUrl = `${API_URL}/api/employee/`;
+    let nextUrl = null;
+    let prevUrl = null;
+
+    // 中文表頭對應順序
+    const column_names = [
+        "項次",
+        "姓名",
+        "年齡",
+        "電話",
+        "身分別",
+        "薪別",
+    ];
+
+    // 分頁按鈕
+    const nextBtn = document.getElementById("nextPageBtn");
+    const prevBtn = document.getElementById("prevPageBtn");
+
     // **將表格生成的邏輯封裝成函式**
-    async function generateEmployeeTable() {
+    async function generateEmployeeTable(url = currentUrl) {
 
         // 動態產生表格
         const table = document.getElementById("employeeTable");
@@ -53,9 +72,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         try {
-            const { employees } = await fetchEmployees_2();  // 呼叫 API 獲取員工資料
-            console.log("收到員工的資料", employees);
+            const { employees, next, previous } = await fetchEmployees_2(url);  // 呼叫 API 獲取員工資料
+            currentUrl = url; // 更新目前頁面網址
+            nextUrl = next;
+            prevUrl = previous;
 
+            console.log("📦 即將請求 URL：", url);
+            console.log("收到員工的資料", employees);
 
             if (!Array.isArray(employees) || employees.length === 0) {
                 console.error("employees不是陣列，無法處理", employees);
@@ -71,26 +94,54 @@ document.addEventListener("DOMContentLoaded", async function () {
             tableBody.innerHTML = "";
 
             // 動態產生<th>表頭
-            keys.forEach(key => {
+            column_names.forEach(name => {
                 const th = document.createElement("th");
-                th.textContent = key;
+                th.textContent = name;
                 tableHead.appendChild(th);
-            })
+            });            
 
             // 動態產生員工資料<td>
             employees.forEach(employee => {
                 const row = document.createElement("tr");
-                keys.forEach(key => {
+
+                // 排除 insert_date 和 update_date 欄位
+                keys.slice(0, -2).forEach(key => {
                     const td = document.createElement("td");
                     td.textContent = employee[key];
                     row.appendChild(td);
                 });
                 tableBody.appendChild(row);
             });
+
+            // 控制分頁按鈕顯示與否
+            //nextBtn.style.display = nextUrl ? "inline-block" : "none";
+            nextBtn.style.display = "inline-block";
+            //nextBtn.style.backgroundColor = nextUrl ? "#28a745" : "#ffc107";
+            nextBtn.style.opacity = nextUrl ? 1 : 0.5;
+            
+            //prevBtn.style.display = prevUrl ? "inline-block" : "none";
+            prevBtn.style.display = "inline-block";
+            //prevBtn.style.backgroundColor = prevUrl ? "#28a745" : "#ffc107";
+            prevBtn.style.opacity = prevUrl ? 1 : 0.5;
+
         } catch (error) {
             console.error("載入員工資料失敗:", error);
         }
     };
+    
+    // 分頁按鈕事件
+    nextBtn.addEventListener("click", () => {
+        if (nextUrl) {
+            generateEmployeeTable(`${API_URL}${nextUrl}`);
+        }
+    });
+
+    prevBtn.addEventListener("click", () => {
+        if (prevUrl) {
+            generateEmployeeTable(`${API_URL}${prevUrl}`);
+        }
+    });
+
 
     // 導覽列選單
     if (sidebar) {
