@@ -1,16 +1,62 @@
 // import 'bootstrap/dist/css/bootstrap.min.css';  // 引入 Bootstrap 樣式
 // import 'bootstrap-icons/font/bootstrap-icons.css'; // 引入 Bootstrap Icon
 // import 'bootstrap';  // 可選，載入 Bootstrap JS（如果有互動功能）
+import { API_URL } from "./env.js";
 import { fetchEmployees_2 } from "./apiClient.js"
 import { createEmployee } from "./apiClient.js"
-import { identityMap, salaryTypeMap, getIdentityDisplay, getSalaryTypeDisplay } from './formatter.js';
-import { API_URL } from "./env.js";
+import {
+    identityMap,
+    salaryTypeMap,
+    getIdentityDisplay,
+    getSalaryTypeDisplay
+} from "./formatter.js";
+
 
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM 已經載入完成！");
 
-    // 漢堡選單測試
+    // -----------------------------------------------------------------------
+    // 主畫面-側邊導覽列切換控制
+    // -----------------------------------------------------------------------
+   
+    // 導覽列選單
     const sidebar = document.getElementById("Sidebar");
+
+    if (sidebar) {
+        toggleButton.addEventListener("click", function () {
+            sidebar.classList.toggle("active");
+        });
+    }; 
+
+    // 獲取所有選單連結和內容區塊
+    const menuLinks = document.querySelectorAll('.sidebar ul li a');
+    const sections = document.querySelectorAll('.main > div');
+
+    // 點擊事件處理
+    menuLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault(); // 防止預設跳轉行為
+
+            // 切換選單的 active 樣式
+            menuLinks.forEach(link => link.classList.remove('active'));
+            link.classList.add('active');
+
+            // 根據 href 顯示對應的區塊
+            const targetId = link.getAttribute('href').substring(1); // 去掉「#」
+            sections.forEach(section => {
+                if (section.id === targetId) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+        });
+    }); 
+
+
+
+
+    // 漢堡選單測試(還沒做完)    
     const toggleButton = document.createElement("button");
 
     toggleButton.innerText = "☰";
@@ -25,6 +71,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     document.body.appendChild(toggleButton);
 
+
+
+    // -----------------------------------------------------------------------
+    // 設定畫面-成員設定區域-「+新增成員」按鈕
+    // -----------------------------------------------------------------------
 
     // 點擊新增成員按鈕，顯示彈出視窗
     document.getElementById('btn_add').addEventListener('click', function() {
@@ -87,7 +138,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         `;
         tableBody.appendChild(row);
     }
+
     
+    // -----------------------------------------------------------------------
+    // 設定畫面-成員設定區域-「查詢」按鈕
+    // -----------------------------------------------------------------------
+
     // 綁定查詢按鈕
     const searchButton = document.getElementById("btn_search_member");
 
@@ -211,38 +267,5 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (prevUrl) {
             generateEmployeeTable(`${API_URL}${prevUrl}`);
         }
-    });
-
-
-    // 導覽列選單
-    if (sidebar) {
-        toggleButton.addEventListener("click", function () {
-            sidebar.classList.toggle("active");
-        });
-    }; 
-
-    // 獲取所有選單連結和內容區塊
-    const menuLinks = document.querySelectorAll('.sidebar ul li a');
-    const sections = document.querySelectorAll('.main > div');
-
-    // 點擊事件處理
-    menuLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault(); // 防止預設跳轉行為
-
-            // 切換選單的 active 樣式
-            menuLinks.forEach(link => link.classList.remove('active'));
-            link.classList.add('active');
-
-            // 根據 href 顯示對應的區塊
-            const targetId = link.getAttribute('href').substring(1); // 去掉「#」
-            sections.forEach(section => {
-                if (section.id === targetId) {
-                    section.classList.add('active');
-                } else {
-                    section.classList.remove('active');
-                }
-            });
-        });
-    });   
+    });  
 });
