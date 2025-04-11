@@ -1,5 +1,6 @@
 #frontend
 node_proxy/
+node_proxy/node_modules/
 client/test.http
 client/js/env.js
 client/js/test.js
@@ -8,7 +9,9 @@ client/js/test.js
 *.mdf
 *.ldf
 *.ndf
+database/mssql_backup/
 database/mssql_data/
+
 
 
 #backend
@@ -46,4 +49,3 @@ AI/RL/__pycache__
 *.bak
 *.log
 *.DS_Store
-node_modules/
