@@ -2,7 +2,7 @@
 import { API_URL } from "./env.js";
 
 
-export async function fetchEmployees_2(url=`${API_URL}/api/employee/`) {
+async function fetchEmployees_2(url=`${API_URL}/api/employee/`) {
     try {
         console.log(`Fetching: ${url}`);
 
@@ -77,22 +77,22 @@ async function fetchEmployees() {
     }
 }
 
-// Create new employee
-async function createEmployee(employeeData) {
-    await loadConfig();
-    try {
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(employeeData)
-        });
-        const data = await response.json();
-        return data; // Return JSON response
-    } catch (error) {
-        console.error("Error creating employee:", error);
-        return null;
+    // Create new employee
+    async function createEmployee(employeeData) {
+        // await loadConfig();
+        try {
+            const response = await fetch(`${API_URL}/api/employee/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(employeeData)
+            });
+            const data = await response.json();
+            return data; // Return JSON response
+        } catch (error) {
+            console.error("Error creating employee:", error);
+            return null;
+        }
     }
-}
 
 // Edit existing employee
 async function editEmployee(id, updatedData) {
@@ -179,4 +179,4 @@ async function deleteSchedule(id) {
     }
 }
 
-export { fetchEmployees, createEmployee, editEmployee, deleteEmployee,fetchSchedules, createSchedule, editSchedule, deleteSchedule };
+export { fetchEmployees_2, fetchEmployees, createEmployee, editEmployee, deleteEmployee,fetchSchedules, createSchedule, editSchedule, deleteSchedule };

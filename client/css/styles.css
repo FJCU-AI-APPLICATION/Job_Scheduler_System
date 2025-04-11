@@ -8,11 +8,13 @@ body {
 .container {
     display: flex;
     height: 100vh;
+    width: 100%;
 }
 
 .sidebar {
     display: flex;
     flex-direction: column;
+    height: 100%;
     width: 200px;
     background-color: #f0f0f0;
     padding: 10px;
@@ -88,10 +90,19 @@ body {
     display: none;
 }
 
+/*不能這樣設定，全部都會跑出來；因為我已經設定display: none;
+#schedule-view, #schedule-planning, #schedule-setting {
+    display: flex; /* 可以根據需求設置為 flex */ /*
+    flex-direction: column; /* 讓子元素垂直排列 */ /*
+} */
+
 .main > div.active {
     display: block;
 }
 
+
+
+/*
 .header {
     display: flex;
     justify-content: space-between;
@@ -121,6 +132,8 @@ body {
     background-color: #ffc107;
     color: #fff;
 }
+*/
+
 
 table {
     width: 100%;
@@ -145,7 +158,7 @@ th {
 
 /* 班表查詢區域樣式 */
 #schedule-view {
-    margin-top: 20px;
+    /* margin-top: 20px; */
     font-size: 20px;
 }
 
@@ -278,7 +291,7 @@ th {
 
 /* 排班區域樣式 */
 #schedule-planning {
-    margin-top: 20px;
+    /* margin-top: 20px; */
     font-size: 20px;
 }
 
@@ -584,8 +597,11 @@ th {
 
 /* 設定區域樣式 */
 #schedule-setting {
-    margin-top: 20px;
+    /* margin-top: 20px; */
     font-size: 20px;
+    height: 100%;
+    /* display: flex; 會出問題
+    flex-direction: column; */
 }
 
 #schedule-setting h1 {
@@ -604,13 +620,13 @@ th {
 /* shiftSet-group */
 #schedule-setting .shiftSet-group {
     display: flex;
-    flex-direction: column; /* 垂直排列 */
-    align-items: center; /* 左對齊 */
+    flex-direction: column;
+    align-items: center; 
     width: 100%;
     height: 20%;
     background-color: #fff;
     margin-top: 20px;
-    gap: 10px; /* 外層元素之間的間距增加 */ 
+    gap: 10px;
 }
 
 #schedule-setting .shiftSet-group div {
@@ -634,13 +650,13 @@ th {
 /* memberSet-group */
 #schedule-setting .memberSet-group {
     display: flex;
-    flex-direction: column; /* 垂直排列 */
-    align-items: center; /* 左對齊 */
+    flex-direction: column;
+    align-items: center;
     width: 100%;
-    height: 50%;
+    flex-grow: 1;
     background-color: #fff;
     margin-top: 20px;
-    gap: 10px; /* 外層元素之間的間距增加 */
+    gap: 10px;
 }
 
 #schedule-setting .memberSet-group div {
@@ -683,15 +699,119 @@ th {
     opacity: 0.8;
 }
 
+#schedule-setting .memberSet-group #addMemberModal {
+    display: none;  /* 初始隱藏 */
+    position: fixed;
+    left: 200px;
+    top: 0;
+    width: calc(100% - 200px);
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);  /* 半透明背景 */
+    padding-top: 10%;
+}
+
+#schedule-setting .memberSet-group #addMemberModal .title-field {
+    background-color: #4B5C6B;
+    color: #f0f0f0;
+    width: 100%;
+    /* border: 1px solid red; */
+}
+
+#schedule-setting .memberSet-group #addMemberModal .modal-field {
+    background-color: #fefefe;    
+    border: 1px solid #888;
+    width: 100%; /* 彈出視窗寬度 */
+    height: 30%;
+    padding: 10px;
+    box-sizing: border-box;
+    /* background-color: #007bff; */
+}
+
+
+#schedule-setting .memberSet-group .modal-field #addMemberForm {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px 10px;
+    width: 100%;
+    align-items: center;
+    /* border: 1px solid red; */
+}
+
+.form-item.span-1 { grid-column: span 1; }
+.form-item.span-2 { grid-column: span 2; }
+.form-item.span-3 { grid-column: span 3; }
+.form-item.span-6 { grid-column: span 6; }
+
+#addMemberForm > .form-item {
+    display: flex; /* 讓每個 div 裡的 label 和 input 獨立放入 grid */
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    height: 100%;
+    box-sizing: border-box;
+    /* border:1px dotted blue; */
+}
+
+#addMemberForm > .form-item label {
+    width: 25%;             /* 固定寬度，讓所有 label 對齊 */
+    flex-shrink: 0;          /* 不要被壓縮 */
+    text-align: right;       /* 文字靠右對齊 */
+    white-space: nowrap;
+}
+
+#addMemberForm > .form-item input,
+#addMemberForm > .form-item select {
+    flex: 1;                 /* 撐滿剩下的空間 */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#addMemberForm .form-item.button-row {
+    flex-wrap: nowrap;
+}
+
+#addMemberForm .button-row span {
+    flex: 1;
+    height: 100%;
+    box-sizing: border-box;
+    /* border:1px dotted green; */
+}
+
+#addMemberForm .button-row button {
+    white-space: nowrap;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+#addMemberForm .button-row button:hover {
+    opacity: 0.8;
+}
+
+#addMemberForm .button-row #btn_cancel {
+    background-color: hsla(3, 100%, 51%, 0.74);
+    color: #fff;
+}
+
+#addMemberForm .button-row #btn_reset {
+    background-color: #ffc107;
+    color: #fff;
+}
+
+
 #schedule-setting .memberSet-group .table-field {
-    display:block;
-    width:100%;
+    display: block;
+    width: 100%;
 }
 
 #schedule-setting .memberSet-group .table-field .table-wrapper {
-    display:block;
-    width:100%;
-    margin-bottom:10px;
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
 }
 
 #schedule-setting .memberSet-group .table-field .table-wrapper table {

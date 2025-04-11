@@ -2,6 +2,8 @@
 // import 'bootstrap-icons/font/bootstrap-icons.css'; // 引入 Bootstrap Icon
 // import 'bootstrap';  // 可選，載入 Bootstrap JS（如果有互動功能）
 import { fetchEmployees_2 } from "./apiClient.js"
+import { createEmployee } from "./apiClient.js"
+import { identityMap, salaryTypeMap, getIdentityDisplay, getSalaryTypeDisplay } from './formatter.js';
 import { API_URL } from "./env.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -24,6 +26,67 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.body.appendChild(toggleButton);
 
 
+    // 點擊新增成員按鈕，顯示彈出視窗
+    document.getElementById('btn_add').addEventListener('click', function() {
+        document.getElementById('addMemberModal').style.display = 'block';  // 顯示表單
+    });
+
+    // 點擊取消按鈕，隱藏彈出視窗
+    document.getElementById('btn_cancel').addEventListener('click', function() {
+        document.getElementById('addMemberModal').style.display = 'none';  // 隱藏表單
+    });
+
+    // 提交表單資料
+    document.getElementById('addMemberForm').addEventListener('submit', async function(event) {
+        event.preventDefault();  // 防止頁面重新載入
+
+        const submitBtn = document.getElementById('btn_submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '送出中...';
+
+        const name = document.getElementById('name').value;
+        const age = document.getElementById('age').value;
+        const phone = document.getElementById('phone').value;
+        const identity = document.getElementById('identity').value;
+        const salary_type = document.getElementById('salary_type').value;        
+
+        const newEmployee = {
+            name: name,
+            age: age,
+            phone: phone,
+            identity: identity,
+            salary_type: salary_type,
+        };
+        
+        const result = await createEmployee(newEmployee);
+        
+        // ✅ 執行完再恢復按鈕狀態
+        submitBtn.disabled = false;
+        submitBtn.textContent = '送出';
+
+        if (result && result.id) {
+            alert("新增成功");
+            addToTable(result); // 你自己寫的函式：將資料加入畫面
+            document.getElementById("addMemberModal").style.display = "none";
+        } else {
+            alert("新增失敗，請再試一次");
+        }
+    });
+
+    function addToTable(employee) {
+        const tableBody = document.querySelector("#employeeTable tbody");
+      
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${employee.id}</td>
+          <td>${employee.name}</td>
+          <td>${employee.age}</td>
+          <td>${employee.phone}</td>
+          <td>${employee.identity}</td>
+          <td>${employee.salary_type}</td>
+        `;
+        tableBody.appendChild(row);
+    }
     
     // 綁定查詢按鈕
     const searchButton = document.getElementById("btn_search_member");
@@ -46,7 +109,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 中文表頭對應順序
     const column_names = [
-        "項次",
+        "員工ID",
         "姓名",
         "年齡",
         "電話",
@@ -55,8 +118,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     ];
 
     // 分頁按鈕
-    const nextBtn = document.getElementById("nextPageBtn");
-    const prevBtn = document.getElementById("prevPageBtn");
+    const nextBtn = document.getElementById("btn_next");
+    const prevBtn = document.getElementById("btn_prev");
 
     // **將表格生成的邏輯封裝成函式**
     async function generateEmployeeTable(url = currentUrl) {
@@ -107,7 +170,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // 排除 insert_date 和 update_date 欄位
                 keys.slice(0, -2).forEach(key => {
                     const td = document.createElement("td");
-                    td.textContent = employee[key];
+                    
+                    if (key === "identity") {
+                        td.textContent = getIdentityDisplay(employee[key]);
+                    } else if (key === "salary_type") {
+                        td.textContent = getSalaryTypeDisplay(employee[key]);
+                    } else {
+                        td.textContent = employee[key];
+                    }
+
                     row.appendChild(td);
                 });
                 tableBody.appendChild(row);
