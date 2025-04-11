@@ -4,10 +4,18 @@ client/test.http
 client/js/env.js
 client/js/test.js
 
+#database
+*.mdf
+*.ldf
+*.ndf
+database/mssql_data/
+
+
 #backend
 server/venv
 server/envs
 server/envs/dev.env
+server/entrypoint.sh
 server/apps/__pycache__
 server/employee/__pycache__
 server/schedule/migrations
@@ -28,3 +36,14 @@ AI/RL/__pycache__
 *.ntvs*
 *.njsproj
 *.sln
+
+
+
+*.mdf
+*.ldf
+*.sqlite
+*.env
+*.bak
+*.log
+*.DS_Store
+node_modules/
