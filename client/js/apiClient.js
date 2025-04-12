@@ -77,22 +77,22 @@ async function fetchEmployees() {
     }
 }
 
-    // Create new employee
-    async function createEmployee(employeeData) {
-        // await loadConfig();
-        try {
-            const response = await fetch(`${API_URL}/api/employee/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(employeeData)
-            });
-            const data = await response.json();
-            return data; // Return JSON response
-        } catch (error) {
-            console.error("Error creating employee:", error);
-            return null;
-        }
+// Create new employee
+async function createEmployee(employeeData) {
+    // await loadConfig();
+    try {
+        const response = await fetch(`${API_URL}/api/employee/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(employeeData)
+        });
+        const data = await response.json();
+        return data; // Return JSON response
+    } catch (error) {
+        console.error("Error creating employee:", error);
+        return null;
     }
+}
 
 // Edit existing employee
 async function editEmployee(id, updatedData) {
@@ -113,7 +113,7 @@ async function editEmployee(id, updatedData) {
 
 // Delete an employee
 async function deleteEmployee(id) {
-    await loadConfig();
+    // await loadConfig();
     try {
         const response = await fetch(API_URL + id + "/", { method: "DELETE" });
         return response.ok ? { success: true } : { success: false }; // Return JSON response
@@ -125,13 +125,22 @@ async function deleteEmployee(id) {
 
 // Fetch all schedules
 async function fetchSchedules() {
-    await loadConfig();
+    // await loadConfig();
     try {
-        const response = await fetch(API_URL + "schedule/");
-        return await response.json();
+        const response = await fetch(`${API_URL}/api/schedule/`);
+        const data = await response.json();
+        return {
+            schedules: data.results || data,
+            next: data.next || null,
+            previous: data.previous || null,
+        };
     } catch (error) {
         console.error("Error fetching schedules:", error);
-        return null;
+        return {
+            schedules: [],
+            next: null,
+            previous: null,
+        };
     }
 }
 

@@ -1,14 +1,81 @@
 body {
     font-family: Arial, sans-serif;
+    height: 100vh;
     margin: 0;
     padding: 0;
     background-color: #f8f9fa;
 }
 
+
+/* ---------------------------- button style ----------------------------  */
+button {
+    background-color: #28a745;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 3px;
+    font-size: 14px;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;    
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.8;
+    background-color: gray;
+}
+/* ------------------------- button style (end) -------------------------  */
+
+
+
+/* ---------------------------- table style ----------------------------  */
+/* table structure: thead > tr > th ; tbody > tr > td ; tfoot > tr > td */
+table {
+    width: 95%;
+    min-width: 600px;            /* 可選：避免欄太窄 */     
+    margin: 20px 0px;    
+    border: 1px solid #ddd;
+    border-collapse: collapse;   /* 合併邊框 */
+    font-size: 14px;   
+    table-layout: auto;
+}
+
+table thead th {
+    background-color: #4B5C6B;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    color: white;
+    text-align: center;
+    white-space: nowrap; 
+        
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+  
+table tbody tr:hover {
+    background-color: #f5faff;
+}
+
+table tbody td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: center;
+    white-space: nowrap;         /* 防止文字換行（可選） */
+}
+
+/* ------------------------- table style (end) -------------------------  */
+
+
 .container {
     display: flex;
-    height: 100vh;
+    height: 100%;
     width: 100%;
+    padding: 0;
+    margin: 0;    
+    box-sizing: border-box;
 }
 
 .sidebar {
@@ -16,8 +83,9 @@ body {
     flex-direction: column;
     height: 100%;
     width: 200px;
-    background-color: #f0f0f0;
-    padding: 10px;
+    background-color: #f0f0f0;    
+    padding: 20px;
+    box-sizing: border-box;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -134,26 +202,6 @@ body {
 }
 */
 
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-table, th, td {
-    border: 1px solid #ddd;
-}
-
-th, td {
-    text-align: center;
-    padding: 8px;
-}
-
-th {
-    background-color: #f0f0f0;
-}
-
 /* --------------------------------------------------------------------- */
 
 /* 班表查詢區域樣式 */
@@ -180,15 +228,15 @@ th {
     flex-direction: row;
     align-items: center;
     justify-content: start;
-    height: 5vh;
-    gap: 10px;
+    height: 10%;
     margin-top: 20px;
-    /* border: 1px solid red; */
+    border: 1px solid red;
 }
 
 #schedule-view .date-group select {
-    height: 80%;
-    width: 5%;
+    height: 100%;
+    width: 10%;
+    padding: 10px;
 }
 
 
@@ -197,10 +245,10 @@ th {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    height: 5vh;
+    height: 10%;
     gap: 10px;
     margin-top: 20px;
-    /* border: 1px solid red; */
+    border: 1px solid red;
 }
 
 #schedule-view .query-group div {
@@ -220,13 +268,14 @@ th {
 #schedule-view input[type="date"] {
     width: 100%;
     max-width: 300px;
-    padding: 8px;
+    padding: 10px;
     font-size: 16px;
     border: 1px solid #ddd;
     border-radius: 3px;
     margin-bottom: 10px;
 }
 
+/*
 #schedule-view .query-group button {
     white-space: nowrap;
     color: #fff;
@@ -234,7 +283,8 @@ th {
     padding: 8px 12px;
     border-radius: 3px;
     cursor: pointer;
-}
+}*/
+
 
 #schedule-view .query-group #btn_search_schedule {
     background-color: purple;
@@ -244,48 +294,13 @@ th {
     background-color :brown;
 }
 
-#schedule-view button:hover {
-    opacity: 0.8;
-    /* background-color: gray; */
+
+#schedule-view .search-group {
+    /* overflow-x: auto; */
+    /* max-width: 100%; */
+    margin: 20px 0 auto;
+    border: 1px solid red;
 }
-
-
-#schedule-view .table-wrapper {
-    overflow-x: auto;
-    max-width: 100%;
-}
-
-#schedule-view #employeeTable {
-    width: 100%;
-    border-collapse: collapse;   /* 合併邊框 */
-    font-size: 14px;
-    min-width: 600px;            /* 可選：避免欄太窄 */
-    margin-top: 20px;
-}
-
-#schedule-view #employeeTable thead,
-#schedule-view #employeeTable td {
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  text-align: center;
-  white-space: nowrap;         /* 防止文字換行（可選） */
-}
-
-#schedule-view #employeeTable thead th {
-  /* background-color: #f0f0f0; */
-  background-color: #4B5C6B;
-  color: white;
-}
-
-#schedule-view #employeeTable tr:nth-child(even) {
-  background-color: #fafafa;
-}
-
-#schedule-view #employeeTable tr:hover {
-  background-color: #f5faff;
-}
-
-
 
 /* --------------------------------------------------------------------- */
 
@@ -354,16 +369,6 @@ th {
     /* font-size: 14px; */
 }
 
-#schedule-planning .date-group button {
-    height: 32px;
-    /* font-size: 14px; */
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-}
 
 /* arrange-group */
 #schedule-planning .arrange-group {
@@ -459,16 +464,6 @@ th {
     flex: 1;
 }
 
-#schedule-planning .vacation-field button {
-    white-space: nowrap;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
 /*
 #vacation {
     width: 100%;
@@ -542,17 +537,12 @@ th {
 
 
 #schedule-planning .additions-group button.cross {
-    font-size: 42px;
-    color: #28a745;
-    font-weight: bold;
     background: none;
+    font-size: 60px;
+    font-weight: bold;
+    color: #28a745;
     border: none;
     cursor: pointer;
-}
-
-#schedule-planning .additions-group button.cross:hover {
-    opacity: 0.8;
-    /* color: red; */
 }
 
 /* actions-group */
@@ -568,28 +558,13 @@ th {
     background: none;
 }
 
-#schedule-planning .actions-group button {
-    padding: 8px 15px;
-    font-size: 14px;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    color: #fff;
-}
-
-#schedule-planning .actions-group .btn_arrange {
-    background-color: #28a745;
-    color: #fff;
-}
-
-#schedule-planning .actions-group .btn_export {
+#schedule-planning .actions-group #btn_export {
     background-color: #ffc107;
-    color: #fff;
 }
 
-#schedule-planning .actions-group button:hover {
+#schedule-planning .actions-group #btn_export:hover {
     opacity: 0.8;
-    /* background-color: gray; */
+    background-color: gray;
 }
 
 
@@ -682,12 +657,6 @@ th {
 
 #schedule-setting .memberSet-group .button-field button {
     white-space: nowrap;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 3px;
-    cursor: pointer;
 }
 
 #schedule-setting .memberSet-group .button-field #btn_export {
@@ -695,8 +664,10 @@ th {
     color: #fff;
 }
 
-#schedule-setting .memberSet-group .button-field button:hover {
+
+#schedule-setting .memberSet-group .button-field #btn_export:hover {
     opacity: 0.8;
+    background-color: gray;
 }
 
 #schedule-setting .memberSet-group #addMemberModal {
@@ -778,30 +749,23 @@ th {
     /* border:1px dotted green; */
 }
 
-#addMemberForm .button-row button {
-    white-space: nowrap;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-#addMemberForm .button-row button:hover {
-    opacity: 0.8;
-}
-
 #addMemberForm .button-row #btn_cancel {
     background-color: hsla(3, 100%, 51%, 0.74);
-    color: #fff;
+}
+
+#addMemberForm .button-row #btn_cancel:hover {
+    opacity: 0.8;
+    background-color: gray;
 }
 
 #addMemberForm .button-row #btn_reset {
     background-color: #ffc107;
-    color: #fff;
 }
 
+#addMemberForm .button-row #btn_reset:hover {
+    opacity: 0.8;
+    background-color: gray;
+}
 
 #schedule-setting .memberSet-group .table-field {
     display: block;
@@ -811,7 +775,7 @@ th {
 #schedule-setting .memberSet-group .table-field .table-wrapper {
     display: block;
     width: 100%;
-    margin-bottom: 10px;
+    margin: 20px 0px;
 }
 
 #schedule-setting .memberSet-group .table-field .table-wrapper table {
@@ -824,42 +788,9 @@ th {
 
 #schedule-setting .memberSet-group .table-field .table-button button {
     display: none;
-    white-space:nowrap;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 3px;
-    cursor: pointer;
 }
 
-
-#schedule-setting table {
-    width: 90%;
-    border-collapse: collapse;   /* 合併邊框 */
-    font-size: 14px;
-    min-width: 600px;            /* 可選：避免欄太窄 */
-    margin-top: 20px;
-}
-
-#schedule-setting table thead,
-#schedule-setting table td {
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  text-align: center;
-  white-space: nowrap;         /* 防止文字換行（可選） */
-}
-
-#schedule-setting table thead th {
-  /* background-color: #f0f0f0; */
-  background-color: #4B5C6B;
-  color: white;
-}
-
-#schedule-setting table tbody tr:nth-child(even) {
-  background-color: #fafafa;
-}
-
-#schedule-setting table tbody tr:hover {
-  background-color: #f5faff;
+#schedule-setting .memberSet-group .table-field .table-button button:hover {
+    opacity: 0.8;
+    background-color: gray;
 }

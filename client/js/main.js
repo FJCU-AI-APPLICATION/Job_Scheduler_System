@@ -2,6 +2,7 @@
 // import 'bootstrap-icons/font/bootstrap-icons.css'; // 引入 Bootstrap Icon
 // import 'bootstrap';  // 可選，載入 Bootstrap JS（如果有互動功能）
 import { API_URL } from "./env.js";
+import { searchSchedule } from "./schedule.js";
 import { fetchEmployees_2 } from "./apiClient.js"
 import { createEmployee } from "./apiClient.js"
 import {
@@ -72,7 +73,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.body.appendChild(toggleButton);
 
 
+    // -----------------------------------------------------------------------
+    // 班表查詢畫面-班表查詢區域-「查詢」按鈕
+    // -----------------------------------------------------------------------
 
+    // 綁定查詢按鈕
+    const searchBtnSchedule = document.getElementById("btn_search_schedule");
+
+    if (!searchBtnSchedule) {
+        console.error("找不到 #btn_search_schedule 按鈕，請確認 HTML 結構！");
+        return; // 中止後續執行
+    }
+
+    searchBtnSchedule.addEventListener("click", () => {
+        console.log("🔍 查詢按鈕被點擊，開始獲取班表資料...");
+        searchSchedule(); // 呼叫資料取得邏輯
+    });   
+
+    
     // -----------------------------------------------------------------------
     // 設定畫面-成員設定區域-「+新增成員」按鈕
     // -----------------------------------------------------------------------
@@ -158,8 +176,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         await generateEmployeeTable();
     });
 
-    
-    let currentUrl = `${API_URL}/api/employee/`;
+    let endpoint = "employee"
+    let currentUrl = `${API_URL}/api/${endpoint}/`;
     let nextUrl = null;
     let prevUrl = null;
 
@@ -174,8 +192,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     ];
 
     // 分頁按鈕
-    const nextBtn = document.getElementById("btn_next");
-    const prevBtn = document.getElementById("btn_prev");
+    let nextBtn = document.getElementById("btn_next");
+    let prevBtn = document.getElementById("btn_prev");
 
     // **將表格生成的邏輯封裝成函式**
     async function generateEmployeeTable(url = currentUrl) {
