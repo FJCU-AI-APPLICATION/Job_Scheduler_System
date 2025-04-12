@@ -34,7 +34,7 @@ button:hover {
 table {
     width: 95%;
     min-width: 600px;            /* 可選：避免欄太窄 */     
-    margin: 20px 0px;    
+    margin: 20px auto;    
     border: 1px solid #ddd;
     border-collapse: collapse;   /* 合併邊框 */
     font-size: 14px;   
@@ -230,7 +230,7 @@ table tbody td {
     justify-content: start;
     height: 10%;
     margin-top: 20px;
-    border: 1px solid red;
+    /* border: 1px solid red; */
 }
 
 #schedule-view .date-group select {
@@ -248,7 +248,7 @@ table tbody td {
     height: 10%;
     gap: 10px;
     margin-top: 20px;
-    border: 1px solid red;
+    /* border: 1px solid red; */
 }
 
 #schedule-view .query-group div {
@@ -299,7 +299,32 @@ table tbody td {
     /* overflow-x: auto; */
     /* max-width: 100%; */
     margin: 20px 0 auto;
-    border: 1px solid red;
+    /* border: 1px solid red; */
+}
+
+#schedule-view .search-group .table-wrapper {
+    display: flex;
+    flex-direction: column;
+    /* max-width: 100%; */
+    margin: 20px 0 auto;
+    /* border: 1px solid red; */
+}
+
+
+#schedule-view .search-group .table-wrapper #scheduleTable {
+    border-collapse: collapse;
+}
+
+#schedule-view .search-group .table-wrapper .button-field {
+    display: flex;
+}
+
+#schedule-view .search-group .table-wrapper .button-field span {
+    flex: 1;
+}
+
+#schedule-view .search-group .table-wrapper .button-field button {
+    display: none;
 }
 
 /* --------------------------------------------------------------------- */
