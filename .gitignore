@@ -4,6 +4,7 @@ node_proxy/node_modules/
 client/test.http
 client/js/env.js
 client/js/test.js
+client/node_modules/
 
 #database
 *.mdf
