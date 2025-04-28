@@ -1,0 +1,12 @@
+-- Database Client 8.2.7
+-- Host: 211.20.21.35 Port: 9493 Database: dbo Schema: dbo
+-- Dump is still an early version, please use the dumped SQL with caution
+
+DROP TABLE IF EXISTS "ShiftPolicy";
+CREATE TABLE "ShiftPolicy"(
+    id int IDENTITY(1,1) NOT NULL,
+    policy_name nvarchar(100) NOT NULL,
+    description nvarchar(max),
+    PRIMARY KEY(id)
+);
+INSERT INTO "ShiftPolicy"(policy_name,description) VALUES(N'全家_1',N''),(N'全家_2',N''),(N'全家_3',N'');

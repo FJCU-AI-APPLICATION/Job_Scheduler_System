@@ -6,6 +6,7 @@ import Vuex from "vuex";
 // import article from "./article.module";
 // import profile from "./profile.module";
 import employee from "./employee.module";
+import policy from "./policy.module";
 
 Vue.use(Vuex);
 
@@ -15,6 +16,8 @@ export default new Vuex.Store({
     // auth,
     // article,
     // profile,
-    employee
+
+    employee,
+    policy
   }
 });

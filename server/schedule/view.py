@@ -85,12 +85,10 @@ class ScheduleComputeWithPolicyShiftsAPIView(APIView):
                 "start_time": detail.start_time.strftime("%H:%M:%S"),
                 "end_time": detail.end_time.strftime("%H:%M:%S")
             })
-        
-        # For each day in the date range, query employee unavailability.
         daily_availability = []
         current_date = start_date
         while current_date <= end_date:
-            day_of_week = current_date.isoweekday()  # 1=Monday, 7=Sunday
+            day_of_week = current_date.isoweekday()
             available_employees = []
             unavailable_employees = []
             

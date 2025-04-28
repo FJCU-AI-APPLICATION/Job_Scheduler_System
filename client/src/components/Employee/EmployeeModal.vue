@@ -1,6 +1,6 @@
 <template>
   <b-modal
-    v-model="visible"
+    v-if="modelValue"
     :title="modalTitle"
     @hidden="resetForm"
     @ok="onOk"
@@ -8,7 +8,7 @@
     cancel-title="取消"
     :ok-disabled="!isFormValid"
   >
-    <b-form ref="form" @submit.stop.prevent="onOk">
+    <b-form @submit.stop.prevent="onOk">
       <b-form-group
         label="姓名"
         label-for="name-input"
@@ -22,7 +22,6 @@
           required
         />
       </b-form-group>
-
       <b-form-group
         label="年齡"
         label-for="age-input"
@@ -38,32 +37,6 @@
           required
         />
       </b-form-group>
-
-      <b-form-group label="電話" label-for="phone-input">
-        <b-form-input id="phone-input" v-model="form.phone" />
-      </b-form-group>
-
-      <b-form-group label="身份別" label-for="identity-input">
-        <b-form-select
-          id="identity-input"
-          v-model="form.identity"
-          :options="[
-            { value: 'FULL', text: '正職' },
-            { value: 'PART', text: '兼職' }
-          ]"
-        />
-      </b-form-group>
-
-      <b-form-group label="薪別" label-for="salary-input">
-        <b-form-select
-          id="salary-input"
-          v-model="form.salary_type"
-          :options="[
-            { value: 'MONTH', text: '月薪' },
-            { value: 'HOUR', text: '時薪' }
-          ]"
-        />
-      </b-form-group>
     </b-form>
   </b-modal>
 </template>
@@ -72,14 +45,11 @@
 export default {
   name: "EmployeeModal",
   props: {
-    modelValue: {
+    visible: {
       type: Boolean,
       default: false
     },
-    isEdit: {
-      type: Boolean,
-      default: false
-    },
+    isEdit: { type: Boolean, default: false },
     initialEmployee: {
       type: Object,
       default: () => ({
@@ -96,31 +66,13 @@ export default {
     return {
       form: { ...this.initialEmployee },
       nameState: null,
-      ageState: null
+      ageState: null,
+      modelValue: this.visible
     };
   },
   computed: {
-    visible: {
-      get() {
-        return this.modelValue;
-      },
-      set(v) {
-        this.$emit("update:modelValue", v);
-      }
-    },
-    modalTitle() {
-      return this.isEdit ? "編輯成員" : "新增成員";
-    },
     isFormValid() {
-      return this.checkValidity();
-    }
-  },
-  watch: {
-    initialEmployee: {
-      immediate: true,
-      handler(emp) {
-        this.form = { ...emp };
-      }
+      return this.form.name && this.form.age > 0;
     }
   },
   methods: {
@@ -129,24 +81,16 @@ export default {
       this.nameState = null;
       this.ageState = null;
     },
-    checkValidity() {
-      const validName = !!this.form.name.trim();
-      this.nameState = validName;
-      const validAge = Number.isInteger(this.form.age) && this.form.age > 0;
-      this.ageState = validAge;
-      return validName && validAge;
-    },
     onOk(evt) {
-      if (!this.checkValidity()) {
+      if (!this.isFormValid) {
         evt.preventDefault();
         return;
       }
-      // emit submit up to parent
       this.$emit("submit", { ...this.form });
     }
+  },
+  beforeMount() {
+    this.modelValue = this.visible;
   }
 };
 </script>
-
-<style scoped>
-</style>

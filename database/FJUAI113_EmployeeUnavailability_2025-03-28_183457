@@ -1,0 +1,18 @@
+-- Database Client 8.2.3
+-- Host: 211.20.21.35 Port: 9493 Database: dbo Schema: dbo
+-- Dump is still an early version, please use the dumped SQL with caution
+
+DROP TABLE IF EXISTS "EmployeeUnavailability";
+CREATE TABLE "EmployeeUnavailability"(
+    id int IDENTITY(1,1) NOT NULL,
+    employee_id bigint NOT NULL,
+    unavailability_type varchar(20) NOT NULL,
+    day_of_week tinyint,
+    start_date date,
+    end_date date,
+    reason nvarchar(255),
+    PRIMARY KEY(id),
+    CONSTRAINT FK__EmployeeU__emplo__0A9D95DB FOREIGN key(employee_id) REFERENCES "Employee"(id),
+    CONSTRAINT CK_EmployeeUnavailability_Type CHECK ([unavailability_type]='DAY_OF_WEEK' AND [day_of_week] IS NOT NULL AND [start_date] IS NULL AND [end_date] IS NULL OR [unavailability_type]='DATE_RANGE' AND [day_of_week] IS NULL AND [start_date] IS NOT NULL AND [end_date] IS NOT NULL)
+);
+INSERT INTO "EmployeeUnavailability"(employee_id,unavailability_type,day_of_week,start_date,end_date,reason) VALUES(1,N'DAY_OF_WEEK',1,null,null,null),(1,N'DAY_OF_WEEK',2,null,null,null),(2,N'DAY_OF_WEEK',1,null,null,null),(2,N'DAY_OF_WEEK',2,null,null,null),(2,N'DAY_OF_WEEK',3,null,null,null),(3,N'DAY_OF_WEEK',1,null,null,null),(4,N'DAY_OF_WEEK',1,null,null,null),(4,N'DAY_OF_WEEK',2,null,null,null),(5,N'DAY_OF_WEEK',1,null,null,null),(5,N'DAY_OF_WEEK',2,null,null,null),(5,N'DAY_OF_WEEK',3,null,null,null),(6,N'DAY_OF_WEEK',1,null,null,null),(7,N'DAY_OF_WEEK',1,null,null,null),(7,N'DAY_OF_WEEK',2,null,null,null),(9,N'DAY_OF_WEEK',1,null,null,null),(10,N'DAY_OF_WEEK',1,null,null,null),(10,N'DAY_OF_WEEK',2,null,null,null);
