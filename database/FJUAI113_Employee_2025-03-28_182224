@@ -1,0 +1,18 @@
+-- Database Client 8.2.3
+-- Host: 211.20.21.35 Port: 9493 Database: dbo Schema: dbo
+-- Dump is still an early version, please use the dumped SQL with caution
+
+DROP TABLE IF EXISTS "Employee";
+CREATE TABLE "Employee"(
+    id int IDENTITY(1,1) NOT NULL,
+    name nvarchar(100) NOT NULL,
+    age int NOT NULL,
+    phone nvarchar(20) NOT NULL,
+    identity nvarchar(4) NOT NULL,
+    salary_type nvarchar(5) NOT NULL,
+    insert_date date,
+    update_date date,
+    PRIMARY KEY(id),
+    CONSTRAINT Employee_age_9c1795a5_check CHECK ([age]>=(0))
+);
+INSERT INTO "Employee"(name,age,phone,identity,salary_type,insert_date,update_date) VALUES(N'王大明',30,N'123456',N'正職',N'月薪','2024-03-01','2024-03-01'),(N'張小花',26,N'123457',N'正職',N'月薪','2024-03-01','2024-03-01'),(N'李大郎',40,N'234567',N'兼職',N'時薪','2024-03-01','2024-03-01'),(N'李大春',40,N'234569',N'兼職',N'時薪','2024-03-02','2024-03-02'),(N'陳小彬',26,N'123458',N'兼職',N'時薪','2024-03-02','2024-03-02'),(N'Updated Name',35,N'987654321',N'FULL',N'MONTH','2024-03-02','2025-03-03'),(N'韋阿寶',26,N'123466',N'兼職',N'時薪','2024-03-02','2024-03-02'),(N'Updated Name',35,N'987654321',N'FULL',N'MONTH','2025-03-03','2025-03-03'),(N'test',11,N'0900',N'FULL',N'MONTH','2025-03-05','2025-03-05');

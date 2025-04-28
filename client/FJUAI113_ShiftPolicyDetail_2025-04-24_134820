@@ -1,0 +1,14 @@
+-- Database Client 8.2.7
+-- Host: 211.20.21.35 Port: 9493 Database: dbo Schema: dbo
+-- Dump is still an early version, please use the dumped SQL with caution
+
+DROP TABLE IF EXISTS "ShiftPolicyDetail";
+CREATE TABLE "ShiftPolicyDetail"(
+    id int IDENTITY(1,1) NOT NULL,
+    policy_id bigint NOT NULL,
+    start_time time NOT NULL,
+    end_time time NOT NULL,
+    PRIMARY KEY(id),
+    CONSTRAINT FK__ShiftPoli__polic__07C12930 FOREIGN key(policy_id) REFERENCES "ShiftPolicy"(id)
+);
+INSERT INTO "ShiftPolicyDetail"(policy_id,start_time,end_time) VALUES(4,'09:00:00','17:00:00'),(7,'07:00:00','15:00:00'),(8,'09:00:00','15:00:00'),(4,'17:00:00','23:00:00'),(4,'23:00:00','09:00:00'),(7,'15:00:00','23:00:00'),(7,'23:00:00','07:00:00'),(8,'15:00:00','23:00:00'),(8,'23:00:00','09:00:00'),(8,'23:00:00','09:00:00');

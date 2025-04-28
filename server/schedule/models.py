@@ -1,21 +1,14 @@
 from django.db import models
 
 from employee.model import Employee
-
+from rest_framework import serializers
 
 
 class Schedule(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
-    # manager = models.ForeignKey(
-    #     Employee,
-    #     on_delete=models.CASCADE, 
-    #     null=True, 
-    #     blank=True,
-    #     related_name="managed_schedules"
-    # )
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
 
     class Meta:
         db_table = "Schedule"
@@ -31,7 +24,7 @@ class ScheduleEmployee(models.Model):
     """
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE, related_name="schedule_assignments")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="employee_assignments")
-    assigned_date = models.DateTimeField(auto_now_add=True)
+    assigned_date = serializers.DateTimeField()
 
     class Meta:
         db_table = "ScheduleEmployee"

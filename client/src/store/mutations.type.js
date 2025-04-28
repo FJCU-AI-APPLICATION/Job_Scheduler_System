@@ -1,5 +1,6 @@
 // export const FETCH_END = "setArticles";
 export const SET_LOADING = "SET_LOADING";
+export const SET_SHOW_MODAL = "setShowModal";
 // export const PURGE_AUTH = "logOut";
 // export const SET_ARTICLE = "setArticle";
 // export const SET_AUTH = "setUser";
@@ -27,3 +28,6 @@ export const SET_EMPLOYEE_COUNT = "setEmployeeCount";
 export const SET_CURRENT_PAGE = "SET_CURRENT_PAGE";
 export const SET_TOTAL_PAGES = "SET_TOTAL_PAGES";
 export const SET_TOTAL_COUNT = "SET_TOTAL_COUNT";
+
+// Policy
+export const SET_POLICIES = "setPolicies";

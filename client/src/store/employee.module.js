@@ -16,7 +16,10 @@ import {
   REMOVE_EMPLOYEE,
   RESET_EMPLOYEE_STATE,
   SET_LOADING,
-  SET_CURRENT_PAGE
+  SET_CURRENT_PAGE,
+  SET_NEXT_URL,
+  SET_PREV_URL,
+  SET_SHOW_MODAL
 } from "@/store/mutations.type";
 
 const initialState = {
@@ -26,9 +29,9 @@ const initialState = {
   previous: null,
   currentPage: 1,
   pageSize: 10,
-  isLoading: false
+  isLoading: false,
+  showModal: false
 };
-
 
 export const state = { ...initialState };
 
@@ -37,10 +40,10 @@ export const actions = {
     context.commit(SET_LOADING, true);
     try {
       const { data } = await EmployeeService.query("employee/", params);
-      console.log("params", params);
-      console.log("data", data);
       context.commit(SET_EMPLOYEES, data.results);
       context.commit(SET_CURRENT_PAGE, params.page);
+      context.commit(SET_NEXT_URL, data.next);
+      context.commit(SET_PREV_URL, data.previous);
     } catch (err) {
       console.error("Failed fetching employees", err);
     } finally {
@@ -75,15 +78,16 @@ export const actions = {
 export const mutations = {
   [SET_EMPLOYEES](state, payload) {
     state.results = Array.isArray(payload) ? payload : [];
+    console.log(state.results);
   },
   [ADD_EMPLOYEE](state, emp) {
-    state.list = [emp, ...state.list];
+    state.results = [emp, ...state.results];
   },
 
   [UPDATE_EMPLOYEE_IN_LIST](state, emp) {
-    const idx = state.list.findIndex((e) => e.id === emp.id);
+    const idx = state.results.findIndex((e) => e.id === emp.id);
     if (idx !== -1) {
-      Vue.set(state.list, idx, emp);
+      Vue.set(state.results, idx, emp);
     }
     if (state.current.id === emp.id) {
       state.current = emp;
@@ -91,10 +95,16 @@ export const mutations = {
   },
 
   [REMOVE_EMPLOYEE](state, id) {
-    state.list = state.list.filter((e) => e.id !== id);
+    state.results = state.results.filter((e) => e.id !== id);
     if (state.current.id === id) {
       Object.assign(state.current, initialState.current);
     }
+  },
+  [SET_NEXT_URL](state, url) {
+    state.next = url;
+  },
+  [SET_PREV_URL](state, url) {
+    state.previous = url;
   },
   [SET_CURRENT_PAGE](state, page) {
     state.currentPage = page;
@@ -106,14 +116,17 @@ export const mutations = {
   },
   [SET_LOADING](state, flag) {
     state.isLoading = flag;
+  },
+  [SET_SHOW_MODAL](state, flag) {
+    state.showModal = flag;
   }
 };
 
 export const getters = {
   currentPage: (state) => state.currentPage,
   pageSize: (state) => state.pageSize,
-  employeesCount: (state) => state.list.length,
-  totalPages: (state) => Math.ceil(state.list.length / state.pageSize) || 1,
+  employeesCount: (state) => state.results.length,
+  totalPages: (state) => Math.ceil(state.results.length / state.pageSize) || 1,
   // raw items for this page
   employees: (state) => state.results,
 
@@ -125,7 +138,8 @@ export const getters = {
   // client‑side helpers
   hasNext: (state) => state.next !== null,
   hasPrev: (state) => state.previous !== null,
-  isLoading: (state) => state.isLoading
+  isLoading: (state) => state.isLoading,
+  showModal: (state) => state.showModal
 };
 
 export default {

@@ -131,23 +131,23 @@ export const EmployeeService = {
 export const PolicyService = {
   // 取得政策列表
   query(params) {
-    return ApiService.query("policies", { params });
+    return ApiService.query("policy", { params });
   },
   // 取得單一政策
   get(id) {
-    return ApiService.get("policies", id);
+    return ApiService.get("policy", id);
   },
   // 新增政策
   create(data) {
-    return ApiService.post("policies", data);
+    return ApiService.post("policy", data);
   },
   // 更新政策
   update(id, data) {
-    return ApiService.update("policies", id, data);
+    return ApiService.update("policy", id, data);
   },
   // 刪除政策
   destroy(id) {
-    return ApiService.delete(`policies/${id}`);
+    return ApiService.delete(`policy/${id}`);
   }
 };
 
@@ -177,3 +177,6 @@ export const ScheduleService = {
     return ApiService.post("schedules", data);
   }
 };
+
+
+

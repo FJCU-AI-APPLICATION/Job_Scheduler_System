@@ -1,0 +1,10 @@
+@api_server = http://127.0.0.1:8000/api/schedule/compute/
+POST {{api_server}} HTTP/1.1
+content-type: application/json
+
+{
+    "policy_id": 4,
+    "employee_ids": [101, 102, 103],
+    "start_date": "2024-12-01",
+    "end_date": "2024-12-07"
+}
