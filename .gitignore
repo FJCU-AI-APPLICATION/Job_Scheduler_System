@@ -5,6 +5,7 @@ client/test.http
 client/js/env.js
 client/js/test.js
 client/node_modules/
+client/yarn.lock
 
 #database
 *.mdf
