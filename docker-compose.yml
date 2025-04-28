@@ -21,7 +21,7 @@ services:
       dockerfile: server.Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/usr/src/app/
+      - ./server:/usr/src/app/
     ports:
       - "8002:8000"
     env_file: './server/envs/dev.env'
@@ -29,6 +29,21 @@ services:
     networks:
       - global-net
 
+  frontend:
+    build:
+      context: ./client
+      dockerfile: client.Dockerfile
+    volumes:
+      - ./client:/app
+    ports:
+      - "8080:8080"
+    stdin_open: true
+    tty: true
+    networks:
+      - global-net
+
+
 networks:
   global-net:
+    driver: bridge
 

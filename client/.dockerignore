@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.idaa/
+
+.env
+*.log
+npm-debug.log
+
+yarn.lock
