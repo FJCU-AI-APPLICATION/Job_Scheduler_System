@@ -6,6 +6,7 @@ client/js/env.js
 client/js/test.js
 client/node_modules/
 client/yarn.lock
+client/vue.config.js
 
 #database
 *.mdf
