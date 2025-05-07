@@ -1,16 +1,56 @@
 <template>
   <div id="app" class="container">
-    <Sidebar />
+    <!-- 測試模式開啟才顯示 -->
+
+    <div>
+      <TestModal v-if="isTestingModal">
+        <template #header>          
+        </template>
+        <template #body>
+        
+        </template>
+        <template #footer>
+          <button @click="alert('送出')">送出</button>
+          <button @click="close">關閉</button>
+        </template>
+      </TestModal>
+    
+      <!-- 正式內容 -->
+      <div v-else>
+        <Sidebar />
+      </div>
+    </div>    
   </div>
 </template>
 
 <script>
+import TestModal from "@/components/TestModal.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import "@/assets/global.css";
+
+
 export default {
   name: "App",
   components: {
+    TestModal,
     Sidebar
+  },
+  methods: {
+    close() {
+      //
+    }
+  },
+  data () {
+    return {
+      isTestingModal: false
+    };
+  },
+  mounted() {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'm') {
+        this.isTestingModal = !this.isTestingModal;
+      }
+    });    
   }
 };
 </script>

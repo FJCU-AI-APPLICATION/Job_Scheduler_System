@@ -1,12 +1,219 @@
 <template>
+  
+  <transition name="modal">
+    <div class="modal-mask" v-if="modelValue">
+      <div class="modal-wrapper">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>{{ modalTitle }}</h3>
+          </div>
+
+          <div class="modal-body">
+            <form @submit.prevent="onOk">
+              <div class="form-group">
+                <label for="name-input">姓名</label>
+                <input
+                  id="name-input"
+                  v-model="form.name"
+                  :class="['form-control', { 'is-invalid': nameState === false }]"
+                  @input="validateName"
+                  required
+                />
+                <div class="invalid-feedback" v-if="nameState === false">姓名為必填</div>
+              </div>
+
+              <div class="form-group">
+                <label for="age-input">年齡</label>
+                <input
+                  id="age-input"
+                  type="number"
+                  v-model.number="form.age"
+                  :class="['form-control', { 'is-invalid': ageState === false }]"
+                  @input="validateAge"
+                  min="1"
+                  required
+                />
+                <div class="invalid-feedback" v-if="ageState === false">年齡需大於 0</div>
+              </div>
+            </form>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="$emit('update:modelValue', false)">取消</button>
+            <button class="btn btn-primary" :disabled="!isFormValid" @click="onOk">送出</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
+</template>
+
+<script>
+export default {
+  name: "EmployeeModal",
+  props: {
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
+    // visible: {
+    //   type: Boolean,
+    //   default: false
+    // },
+    isEdit: { type: Boolean, default: false },
+    initialEmployee: {
+      type: Object,
+      default: () => ({
+        name: "",
+        age: null,
+        phone: "",
+        identity: "FULL",
+        salary_type: "MONTH"
+      })
+    }
+  },
+  emits: ["update:modelValue", "submit"],
+  data() {
+    return {
+      form: { ...this.initialEmployee },
+      nameState: null,
+      ageState: null,
+      // modelValue: this.visible
+    };
+  },
+  watch: {
+    // visible(val) {
+    //   this.modelValue = val;
+    // },
+    modelValue(val) {
+      this.$emit("update:modelValue", val);
+      if (!val) this.resetForm();
+    }
+  },
+  computed: {
+    modalTitle() {
+      return this.isEdit ? "編輯員工" : "新增員工";
+    },
+    isFormValid() {
+      return this.form.name && this.form.age > 0;
+    }
+  },
+  methods: {
+    resetForm() {
+      this.form = { ...this.initialEmployee };
+      this.nameState = null;
+      this.ageState = null;
+    },
+    onOk(evt) {
+      if (!this.isFormValid) {
+        if (evt && typeof evt.preventDefault === 'function') {
+          evt.preventDefault();
+        }    
+        return;
+      }
+      this.$emit("submit", { ...this.form });
+      this.$emit("update:modelValue", false);
+    },
+    validateName() {
+      this.nameState = this.form.name.trim() !== "";
+    },
+    validateAge() {
+      this.ageState = this.form.age > 0;
+    }
+  },
+  // beforeMount() {
+  //   this.modelValue = this.visible;
+  // }
+};
+</script>
+
+<style scoped>
+.modal-mask {
+  position: fixed;
+  z-index: 9998;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-container {
+  width: 400px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+}
+
+.modal-header,
+.modal-footer {
+  padding: 10px 20px;
+  background: #f1f1f1;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(1.05);
+}
+</style>
+
+
+
+<!-- <template>
+  <transition name="modal">
+    <div class="modal-mask">
+      <div class="modal-wrapper">
+        <div class="modal-container">
+          <div class="modal-header">
+            <slot name="header">
+              default header
+            </slot>
+          </div>
+
+          <div class="modal-body">
+            <slot name="body">
+              default body
+            </slot>
+          </div>
+
+          <div class="modal-footer">
+            <slot name="footer">
+              default footer
+              <button class="modal-default-button" @click="$emit('close')">
+                OK
+              </button>
+            </slot>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
+
   <b-modal
-    v-if="modelValue"
+    :visible="modelValue"
     :title="modalTitle"
     @hidden="resetForm"
     @ok="onOk"
     ok-title="送出"
     cancel-title="取消"
     :ok-disabled="!isFormValid"
+    :modal-class="'modal-zfix'"
+    :content-class="'modal-content-fix'"
+    :dialog-class="'modal-dialog-fix'"
   >
     <b-form @submit.stop.prevent="onOk">
       <b-form-group
@@ -44,6 +251,7 @@
 <script>
 export default {
   name: "EmployeeModal",
+
   props: {
     visible: {
       type: Boolean,
@@ -61,7 +269,9 @@ export default {
       })
     }
   },
+
   emits: ["update:modelValue", "submit"],
+
   data() {
     return {
       form: { ...this.initialEmployee },
@@ -70,7 +280,20 @@ export default {
       modelValue: this.visible
     };
   },
+
+  watch: {
+    modelValue(val) {
+      this.$emit("update:modelValue", val);
+    },
+    visible(val) {
+      this.modelValue = val;
+    }
+  },
+
   computed: {
+    modalTitle() {
+      return this.isEdit ? "編輯員工" : "新增員工";
+    },
     isFormValid() {
       return this.form.name && this.form.age > 0;
     }
@@ -93,4 +316,4 @@ export default {
     this.modelValue = this.visible;
   }
 };
-</script>
+</script> -->

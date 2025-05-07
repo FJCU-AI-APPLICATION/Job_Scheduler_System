@@ -7,6 +7,7 @@ export default new Router({
   routes: [
     {
       path: "/",
+      name: "employee",
       component: () => import("@/views/Employee"),
       children: [
         // {
@@ -27,9 +28,14 @@ export default new Router({
       ]
     },
     {
-      path: "/policy",
+      path: "/",
       name: "policy",
       component: () => import("@/views/Policy")
+    },
+    {
+      path: "/",
+      name: "schedule",
+      component: () => import("@/views/Schedule")
     }
     // {
     //   name: "login",

@@ -1,4 +1,5 @@
 <template>
+  
   <section id="member-settings">
     <h1>成員設定</h1>
 
@@ -7,7 +8,7 @@
       <b-button variant="success" @click="openCreate">+ 新增成員</b-button>
       <b-button variant="primary" @click="refreshList">重新載入</b-button>
     </div>
-
+    
     <!-- 員工表格 -->
     <EmployeeTable
       :employees="employees"
@@ -28,19 +29,28 @@
 
     <!-- 員工 Modal -->
     <EmployeeModal
-      ref="employeeModal"
-      visible="showModal"
+      :modelValue="showModal"
       :is-edit="isEdit"
       :initial-employee="editingEmployee"
       @submit="handleSubmit"
       @update:modelValue="showModal = $event"
     />
+    <!-- <p>showModal: {{ showModal }}</p> -->
+    <!-- <EmployeeModal
+      ref="employeeModal"
+      :visible="showModal"
+      :is-edit="isEdit"
+      :initial-employee="editingEmployee"
+      @submit="handleSubmit"
+      @update:modelValue="showModal = $event"
+    /> -->
   </section>
 </template>
 
 <script>
 import store from "@/store";
 import { mapGetters } from "vuex";
+import EmployeeList from "@/components/Employee/EmployeeList.vue";
 import EmployeeTable from "@/components/Employee/EmployeeTable.vue";
 import EmployeeModal from "@/components/Employee/EmployeeModal.vue";
 import { FETCH_EMPLOYEES } from "@/store/actions.type";
@@ -96,7 +106,12 @@ export default {
     openCreate() {
       this.isEdit = false;
       this.editingEmployee = {};
-      this.showModal = true; // Show the modal when creating
+      this.showModal = true;
+      // this.showModal = false; // Show the modal when creating
+
+      // this.$nextTick(() => {
+      //   this.showModal = true;
+      // });
     },
     openEdit(emp) {
       this.isEdit = true;
@@ -123,7 +138,8 @@ export default {
         )
         .then(() => {
           this.refreshList();
-          this.$refs.employeeModal.closeUniqueModal();
+          // this.$refs.employeeModal.closeUniqueModal();
+          this.showModal = false;
         });
     }
   },
