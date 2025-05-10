@@ -44,6 +44,7 @@ export const actions = {
       context.commit(SET_CURRENT_PAGE, params.page);
       context.commit(SET_NEXT_URL, data.next);
       context.commit(SET_PREV_URL, data.previous);
+      context.commit("SET_EMPLOYEES_COUNT", data.count); //新增的
     } catch (err) {
       console.error("Failed fetching employees", err);
     } finally {
@@ -109,6 +110,9 @@ export const mutations = {
   [SET_CURRENT_PAGE](state, page) {
     state.currentPage = page;
   },
+  SET_EMPLOYEES_COUNT(state, count) {
+    state.count = count;
+  }, //新增的
   [RESET_EMPLOYEE_STATE](state) {
     Object.keys(initialState).forEach((key) => {
       Vue.set(state, key, JSON.parse(JSON.stringify(initialState[key])));
@@ -134,6 +138,7 @@ export const getters = {
   totalCount: (state) => state.count,
   nextPageUrl: (state) => state.next,
   prevPageUrl: (state) => state.previous,
+  employeesCount: (state) => state.count, //新增的
 
   // client‑side helpers
   hasNext: (state) => state.next !== null,

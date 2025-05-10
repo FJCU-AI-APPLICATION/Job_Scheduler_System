@@ -27,13 +27,59 @@
                 <input
                   id="age-input"
                   type="number"
-                  v-model.number="form.age"
+                  v-model="form.age"
                   :class="['form-control', { 'is-invalid': ageState === false }]"
                   @input="validateAge"
                   min="1"
                   required
                 />
                 <div class="invalid-feedback" v-if="ageState === false">年齡需大於 0</div>
+              </div>
+
+              <div class="form-group">
+                <label for="phone-input">電話</label>
+                <input
+                  id="phone-input"
+                  type="text"
+                  v-model="form.phone"
+                  :class="['form-control', { 'is-invalid': phoneState === false }]"
+                  @input="validatePhone"
+                  min="1"
+                  required
+                />
+                <div class="invalid-feedback" v-if="phoneState === false">請輸入有效手機號碼(09xxxxxxxx)</div>
+              </div>
+
+              <div class="form-group">
+                <label for="identity-input">身份別</label>
+                <select
+                  id="identity-input"
+                  v-model="form.identity"
+                  :class="['form-control', { 'is-invalid': identityState === false }]"
+                  @change="validateIdentity"
+                  required
+                >
+                  <option value="">請選擇</option>
+                  <option value="FULL">正職</option>
+                  <option value="PART">兼職</option>
+                </select>
+                <div class="invalid-feedback" v-if="identityState === false">請選擇身份別</div>
+              </div>
+
+              <div class="form-group">
+                <label for="salary_type-input">薪別</label>
+                <select
+                  id="salary_type-input"
+                  v-model="form.salary_type"
+                  :class="['form-control', { 'is-invalid': salaryTypeState === false }]"
+                  @change="validateSalaryType"
+                  required
+                >
+                  <option value="">請選擇</option>
+                  <option value="MONTH">月薪</option>
+                  <option value="HOUR">時薪</option>
+                </select>
+                <div class="invalid-feedback" v-if="salaryTypeState === false">請選擇薪別</div>
               </div>
             </form>
           </div>
@@ -78,6 +124,9 @@ export default {
       form: { ...this.initialEmployee },
       nameState: null,
       ageState: null,
+      phoneState: null,
+      identityState: null,
+      salaryTypeState: null,
       // modelValue: this.visible
     };
   },
@@ -95,7 +144,13 @@ export default {
       return this.isEdit ? "編輯員工" : "新增員工";
     },
     isFormValid() {
-      return this.form.name && this.form.age > 0;
+      return (
+        this.form.name &&
+        this.form.age > 0 &&
+        this.phoneState !== false &&
+        this.identityState !== false &&
+        this.salaryTypeState !== false
+      );
     }
   },
   methods: {
@@ -103,6 +158,9 @@ export default {
       this.form = { ...this.initialEmployee };
       this.nameState = null;
       this.ageState = null;
+      this.phoneState = null;
+      this.identityState = null;
+      this.salaryTypeState = null;
     },
     onOk(evt) {
       if (!this.isFormValid) {
@@ -119,6 +177,17 @@ export default {
     },
     validateAge() {
       this.ageState = this.form.age > 0;
+    },
+    validatePhone() {
+      const regex = /^09\d{8}$/;
+      this.phoneState = regex.test(this.form.phone.toString().trim());
+    },
+    validateIdentity() {
+      this.identityState = this.form.identity === "FULL" || this.form.identity === "PART";
+    },
+    validateSalaryType() {
+      this.salaryTypeState =
+        this.form.salary_type === "MONTH" || this.form.salary_type === "HOUR";
     }
   },
   // beforeMount() {

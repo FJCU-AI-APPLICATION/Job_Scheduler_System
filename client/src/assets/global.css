@@ -36,6 +36,8 @@ table thead th {
   border: 1px solid #ddd;
   color: white;
   text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 table tbody tr:nth-child(even) { background-color: #fafafa; }
 table tbody tr:hover           { background-color: #f5faff; }
@@ -43,6 +45,7 @@ table tbody td {
   padding: 8px 12px;
   border: 1px solid #ddd;
   text-align: center;
+  vertical-align: middle;  
 }
 
 .container {

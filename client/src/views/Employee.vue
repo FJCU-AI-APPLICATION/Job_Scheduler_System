@@ -23,10 +23,11 @@
       v-model="currentPage"
       :per-page="pageSize"
       :total-rows="employeesCount"
-      class="my-3"
+      class="my-3"      
       @change="onPageChange"
     />
-
+      <!-- :value="currentPage" -->
+      <!-- @input="onPageChange" -->
     <!-- 員工 Modal -->
     <EmployeeModal
       :modelValue="showModal"
@@ -87,7 +88,16 @@ export default {
       "hasNext",
       "hasPrev",
       "isLoading"
-    ])
+    ]),
+    currentPage: {
+      get() {
+        return this.$store.state.employee.currentPage;
+      },
+      set(newPage) {
+        this.$store.commit("SET_CURRENT_PAGE", newPage);
+        // this.refreshList();
+      }
+    }
   },
 
   methods: {
@@ -99,7 +109,8 @@ export default {
     },
 
     onPageChange(newPage) {
-      this.currentPage = newPage;
+      console.log("頁碼切換到：", newPage);
+      this.$store.commit("SET_CURRENT_PAGE", newPage);
       this.refreshList();
     },
 
@@ -146,6 +157,7 @@ export default {
 
   mounted() {
     this.refreshList();
+    // console.log("Employee module state:", this.$store.state.employee);
   }
 };
 </script>
