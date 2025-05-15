@@ -1,5 +1,6 @@
 import Vue from "vue";
 import { BootstrapVue, BootstrapVueIcons } from "bootstrap-vue";
+import { SchedulePlugin } from '@syncfusion/ej2-vue-schedule';
 
 import App from "./App.vue";
 import router from "./router";
@@ -13,6 +14,16 @@ import "bootstrap-vue/dist/bootstrap-vue.css";
 
 // FontAwesome
 import "@fortawesome/fontawesome-free/css/all.css";
+
+// Syncfusion Scheduler (UI library styles)
+import '@syncfusion/ej2-base/styles/material.css';
+import '@syncfusion/ej2-buttons/styles/material.css';
+import '@syncfusion/ej2-calendars/styles/material.css';
+import '@syncfusion/ej2-dropdowns/styles/material.css';
+import '@syncfusion/ej2-inputs/styles/material.css';
+import '@syncfusion/ej2-navigations/styles/material.css';
+import '@syncfusion/ej2-popups/styles/material.css';
+import '@syncfusion/ej2-schedule/styles/material.css';
 
 // Global SCSS for sidebar theme
 // import "vue-bootstrap-sidebar/dist/vue-bootstrap-sidebar.css";
@@ -34,14 +45,16 @@ ApiService.init();
 //   Promise.all([store.dispatch(CHECK_AUTH)]).then(next)
 // );
 
-import "bootstrap/dist/css/bootstrap.css";
-import "bootstrap-vue/dist/bootstrap-vue.css";
-
 Vue.use(BootstrapVue);
 Vue.use(BootstrapVueIcons);
+Vue.use(SchedulePlugin);
 
 import { library } from "@fortawesome/fontawesome-svg-core";
-import { faUsers, faCalendarAlt, faClipboardList } from "@fortawesome/free-solid-svg-icons";
+import {
+  faUsers,
+  faCalendarAlt,
+  faClipboardList
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 library.add(faUsers, faCalendarAlt, faClipboardList);
