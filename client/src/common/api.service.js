@@ -17,7 +17,16 @@ const ApiService = {
   },
 
   query(resource, params) {
-    return Vue.axios.get(resource, params).catch((error) => {
+    // console.log("📌 resource:", resource);
+    // console.log("📌 params:", params);
+    if (typeof params !== "object") {
+      throw new Error(`[ApiService] params 必須是物件，你傳的是：${typeof params}`);
+    }
+    const queryString = new URLSearchParams(params).toString();
+    const fullUrl = `${Vue.axios.defaults.baseURL}${resource}?${queryString}`;
+    console.log(`GET 請求網址：`, fullUrl);
+
+    return Vue.axios.get(resource, { params }).catch((error) => {
       throw new Error(`[RWV] ApiService ${error}`);
     });
   },
@@ -29,11 +38,15 @@ const ApiService = {
   },
 
   post(resource, params) {
-    return Vue.axios.post(`${resource}`, params);
+    // return Vue.axios.post(`${resource}`, params);
+    return Vue.axios.post(`${resource}`, params).catch(error => {
+      console.error(`🚨 [POST] ${resource} 失敗`, (error.response && error.response.data) || error.message);
+      throw error;
+    });
   },
 
   update(resource, slug, params) {
-    return Vue.axios.put(`${resource}/${slug}`, params);
+    return Vue.axios.put(`${resource}/${slug}/`, params);
   },
 
   put(resource, params) {
@@ -108,15 +121,15 @@ export const FavoriteService = {
 export const EmployeeService = {
   // 取得員工列表，可帶分頁或篩選參數
   query(params) {
-    return ApiService.query("employee", { params });
+    return ApiService.query("employee/", params);
   },
   // 取得單一員工
   get(id) {
-    return ApiService.get("employee", id);
+    return ApiService.get("employee/", id);
   },
   // 新增員工
   create(data) {
-    return ApiService.post("employee", data);
+    return ApiService.post("employee/", data);
   },
   // 更新員工
   update(id, data) {
@@ -124,7 +137,7 @@ export const EmployeeService = {
   },
   // 刪除員工
   destroy(id) {
-    return ApiService.delete(`employee/${id}`);
+    return ApiService.delete(`employee/${id}/`);
   }
 };
 

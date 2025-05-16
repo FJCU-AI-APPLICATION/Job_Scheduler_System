@@ -54,7 +54,13 @@ import { mapGetters } from "vuex";
 import EmployeeList from "@/components/Employee/EmployeeList.vue";
 import EmployeeTable from "@/components/Employee/EmployeeTable.vue";
 import EmployeeModal from "@/components/Employee/EmployeeModal.vue";
-import { FETCH_EMPLOYEES } from "@/store/actions.type";
+import {
+  CREATE_EMPLOYEE, 
+  FETCH_EMPLOYEES, 
+  UPDATE_EMPLOYEE, 
+  DELETE_EMPLOYEE
+} from "@/store/actions.type";
+import { SET_CURRENT_PAGE } from "@/store/mutations.type";
 
 export default {
   name: "EmployeePage",
@@ -94,8 +100,8 @@ export default {
         return this.$store.state.employee.currentPage;
       },
       set(newPage) {
-        this.$store.commit("SET_CURRENT_PAGE", newPage);
-        // this.refreshList();
+        this.$store.commit(SET_CURRENT_PAGE, newPage);
+        this.refreshList();
       }
     }
   },
@@ -104,19 +110,25 @@ export default {
     refreshList() {
       store.dispatch(FETCH_EMPLOYEES, {
         page: this.currentPage,
-        pagesize: this.pageSize
+        page_size: this.pageSize
       });
     },
 
     onPageChange(newPage) {
-      console.log("頁碼切換到：", newPage);
-      this.$store.commit("SET_CURRENT_PAGE", newPage);
+      // console.log("頁碼切換到：", newPage);
+      this.$store.commit(SET_CURRENT_PAGE, newPage);
       this.refreshList();
     },
 
     openCreate() {
       this.isEdit = false;
-      this.editingEmployee = {};
+      this.editingEmployee = {
+        name: "",
+        age: null,
+        phone: "",
+        identity: "FULL",
+        salary_type: "MONTH"
+      };
       this.showModal = true;
       // this.showModal = false; // Show the modal when creating
 
@@ -132,12 +144,17 @@ export default {
 
     confirmDelete(emp) {
       if (!confirm(`確定刪除 ${emp.name}？`)) return;
-      this.DELETE_EMPLOYEE(emp.id).then(() => this.refreshList());
+      this.$store.dispatch(DELETE_EMPLOYEE, emp.id)
+        .then(() => {
+          this.refreshList();
+        });
     },
 
     handleSubmit(empData) {
-      const action = this.isEdit ? "UPDATE_EMPLOYEE" : "CREATE_EMPLOYEE";
-      store
+      console.log("🧾 送出資料的 ID：", empData.id);
+
+      const action = this.isEdit ? UPDATE_EMPLOYEE : CREATE_EMPLOYEE;
+      this.$store
         .dispatch(
           action,
           this.isEdit
@@ -148,9 +165,14 @@ export default {
             : empData
         )
         .then(() => {
+          alert(this.isEdit ? "員工資料已更新" : "新員工已新增");
           this.refreshList();
           // this.$refs.employeeModal.closeUniqueModal();
           this.showModal = false;
+        })
+        .catch(err => {
+          console.error("❌ 儲存失敗", err);
+          alert("儲存失敗，請稍後再試");
         });
     }
   },

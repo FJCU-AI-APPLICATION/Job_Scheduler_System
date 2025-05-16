@@ -19,6 +19,7 @@ import {
   SET_CURRENT_PAGE,
   SET_NEXT_URL,
   SET_PREV_URL,
+  SET_EMPLOYEE_COUNT,
   SET_SHOW_MODAL
 } from "@/store/mutations.type";
 
@@ -39,12 +40,12 @@ export const actions = {
   async [FETCH_EMPLOYEES](context, params) {
     context.commit(SET_LOADING, true);
     try {
-      const { data } = await EmployeeService.query("employee/", params);
+      const { data } = await EmployeeService.query(params);
       context.commit(SET_EMPLOYEES, data.results);
       context.commit(SET_CURRENT_PAGE, params.page);
       context.commit(SET_NEXT_URL, data.next);
       context.commit(SET_PREV_URL, data.previous);
-      context.commit("SET_EMPLOYEES_COUNT", data.count); //新增的
+      context.commit(SET_EMPLOYEE_COUNT, data.count); //新增的
     } catch (err) {
       console.error("Failed fetching employees", err);
     } finally {
@@ -110,9 +111,9 @@ export const mutations = {
   [SET_CURRENT_PAGE](state, page) {
     state.currentPage = page;
   },
-  SET_EMPLOYEES_COUNT(state, count) {
+  [SET_EMPLOYEE_COUNT](state, count) {
     state.count = count;
-  }, //新增的
+  },
   [RESET_EMPLOYEE_STATE](state) {
     Object.keys(initialState).forEach((key) => {
       Vue.set(state, key, JSON.parse(JSON.stringify(initialState[key])));

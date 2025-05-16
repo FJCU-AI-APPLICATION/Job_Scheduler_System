@@ -190,6 +190,9 @@ export default {
         this.form.salary_type === "MONTH" || this.form.salary_type === "HOUR";
     }
   },
+  mounted() {
+    console.log('store actions:', this.$store._actions);
+  }
   // beforeMount() {
   //   this.modelValue = this.visible;
   // }
