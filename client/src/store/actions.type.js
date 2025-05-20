@@ -32,6 +32,7 @@ export const DELETE_EMPLOYEE = "deleteEmployee";
 
 // Policy
 export const FETCH_POLICIES = "fetchPolicies";
+export const FETCH_POLICY = "fetchPolicy";
 export const CREATE_POLICY = "createPolicy";
 export const UPDATE_POLICY = "updatePolicy";
 export const DELETE_POLICY = "deletePolicy";

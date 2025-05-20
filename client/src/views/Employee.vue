@@ -51,7 +51,6 @@
 <script>
 import store from "@/store";
 import { mapGetters } from "vuex";
-import EmployeeList from "@/components/Employee/EmployeeList.vue";
 import EmployeeTable from "@/components/Employee/EmployeeTable.vue";
 import EmployeeModal from "@/components/Employee/EmployeeModal.vue";
 import {
@@ -77,7 +76,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters([
+    ...mapGetters("employee", [
       "currentPage",
       "pageSize",
       "employeesCount",
@@ -97,26 +96,29 @@ export default {
     ]),
     currentPage: {
       get() {
+        // console.log("👉 讀取 currentPage:", this.$store.state.employee.currentPage);
         return this.$store.state.employee.currentPage;
       },
       set(newPage) {
-        this.$store.commit(SET_CURRENT_PAGE, newPage);
-        this.refreshList();
+        // console.log("✏️ 設定 currentPage:", newPage);
+        this.$store.commit(`employee/${SET_CURRENT_PAGE}`, newPage);
+        // this.refreshList();
       }
     }
   },
 
   methods: {
     refreshList() {
-      store.dispatch(FETCH_EMPLOYEES, {
+      // console.log("🔄 執行 refreshList，當前頁碼是:", this.currentPage);
+      store.dispatch(`employee/${FETCH_EMPLOYEES}`, {
         page: this.currentPage,
         page_size: this.pageSize
       });
     },
 
     onPageChange(newPage) {
-      // console.log("頁碼切換到：", newPage);
-      this.$store.commit(SET_CURRENT_PAGE, newPage);
+      // console.log("頁碼切換到：", newPage);      
+      this.$store.commit(`employee/${SET_CURRENT_PAGE}`, newPage);
       this.refreshList();
     },
 
@@ -144,7 +146,7 @@ export default {
 
     confirmDelete(emp) {
       if (!confirm(`確定刪除 ${emp.name}？`)) return;
-      this.$store.dispatch(DELETE_EMPLOYEE, emp.id)
+      this.$store.dispatch(`employee/${DELETE_EMPLOYEE}`, emp.id)
         .then(() => {
           this.refreshList();
         });
@@ -153,7 +155,7 @@ export default {
     handleSubmit(empData) {
       console.log("🧾 送出資料的 ID：", empData.id);
 
-      const action = this.isEdit ? UPDATE_EMPLOYEE : CREATE_EMPLOYEE;
+      const action = this.isEdit ? `employee/${UPDATE_EMPLOYEE}` : `employee/${CREATE_EMPLOYEE}`;
       this.$store
         .dispatch(
           action,

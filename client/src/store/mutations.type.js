@@ -30,4 +30,13 @@ export const SET_TOTAL_PAGES = "SET_TOTAL_PAGES";
 export const SET_TOTAL_COUNT = "SET_TOTAL_COUNT";
 
 // Policy
-export const SET_POLICIES = "setPolicies";
+export const SET_POLICIES = "SET_POLICIES";
+export const SET_POLICY = "SET_POLICY";
+export const ADD_POLICY = "ADD_POLICY"; // ✅ 加這行
+export const UPDATE_POLICY_IN_LIST = "UPDATE_POLICY_IN_LIST"; // ✅ 若有用到
+export const REMOVE_POLICY = "REMOVE_POLICY"; // ✅ 若有用到
+// export const SET_LOADING = "SET_LOADING";
+// export const SET_CURRENT_PAGE = "SET_CURRENT_PAGE";
+// export const SET_NEXT_URL = "SET_NEXT_URL";
+// export const SET_PREV_URL = "SET_PREV_URL";
+export const SET_POLICIES_COUNT = "SET_POLICIES_COUNT";

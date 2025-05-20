@@ -38,14 +38,16 @@ export const state = { ...initialState };
 
 export const actions = {
   async [FETCH_EMPLOYEES](context, params) {
+    console.log("actions - FETCH_EMPLOYEES 參數：", params);
     context.commit(SET_LOADING, true);
     try {
       const { data } = await EmployeeService.query(params);
+      console.log("actions - FETCH_EMPLOYEES 資料：", data);
       context.commit(SET_EMPLOYEES, data.results);
-      context.commit(SET_CURRENT_PAGE, params.page);
+      context.commit(SET_EMPLOYEE_COUNT, data.count);
       context.commit(SET_NEXT_URL, data.next);
       context.commit(SET_PREV_URL, data.previous);
-      context.commit(SET_EMPLOYEE_COUNT, data.count); //新增的
+      context.commit(SET_CURRENT_PAGE, params.page);
     } catch (err) {
       console.error("Failed fetching employees", err);
     } finally {
@@ -55,6 +57,7 @@ export const actions = {
 
   async [FETCH_EMPLOYEE](context, id) {
     const { data } = await EmployeeService.get(id);
+    console.log("actions - FETCH_EMPLOYEE(byID) 資料：", data);
     context.commit(SET_EMPLOYEE, data);
     return data;
   },
@@ -80,7 +83,7 @@ export const actions = {
 export const mutations = {
   [SET_EMPLOYEES](state, payload) {
     state.results = Array.isArray(payload) ? payload : [];
-    console.log(state.results);
+    // console.log("mutations: SET_EMPLOYEES", state.results);
   },
   [ADD_EMPLOYEE](state, emp) {
     state.results = [emp, ...state.results];
@@ -130,7 +133,8 @@ export const mutations = {
 export const getters = {
   currentPage: (state) => state.currentPage,
   pageSize: (state) => state.pageSize,
-  employeesCount: (state) => state.results.length,
+  // employeesCount: (state) => state.results.length,
+  employeesCount: (state) => state.count,
   totalPages: (state) => Math.ceil(state.results.length / state.pageSize) || 1,
   // raw items for this page
   employees: (state) => state.results,
@@ -139,7 +143,6 @@ export const getters = {
   totalCount: (state) => state.count,
   nextPageUrl: (state) => state.next,
   prevPageUrl: (state) => state.previous,
-  employeesCount: (state) => state.count, //新增的
 
   // client‑side helpers
   hasNext: (state) => state.next !== null,
@@ -149,6 +152,7 @@ export const getters = {
 };
 
 export default {
+  namespaced: true,
   state,
   actions,
   mutations,

@@ -24,7 +24,7 @@ const ApiService = {
     }
     const queryString = new URLSearchParams(params).toString();
     const fullUrl = `${Vue.axios.defaults.baseURL}${resource}?${queryString}`;
-    console.log(`GET 請求網址：`, fullUrl);
+    console.log(`QUERY 請求網址：`, fullUrl);
 
     return Vue.axios.get(resource, { params }).catch((error) => {
       throw new Error(`[RWV] ApiService ${error}`);
@@ -144,7 +144,7 @@ export const EmployeeService = {
 export const PolicyService = {
   // 取得政策列表
   query(params) {
-    return ApiService.query("policy", { params });
+    return ApiService.query("policy/", { params });
   },
   // 取得單一政策
   get(id) {
