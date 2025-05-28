@@ -36,6 +36,9 @@ AI/__pycache__
 AI/venv
 AI/RL/__pycache__
 
+#nginx
+nginx/
+
 # Editor directories and files
 .idea
 .vscode
