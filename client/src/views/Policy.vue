@@ -50,7 +50,14 @@
         small
         bordered
         responsive
-      ></b-table>
+      >
+        <template #cell(start_time)="data">
+          {{ data.item.start_time || "尚無時間" }}
+        </template>
+        <template #cell(end_time)="data">
+          {{ data.item.end_time || "尚無時間" }}
+        </template>
+      </b-table>
       <!-- // url = "policy/shiftpolicy" -->
     </div>
   </div>
@@ -82,7 +89,13 @@ export default {
       error: null,
       // pageSize: 5,
       // currentPage: 1,
-      selectedPolicy: null,
+      selectedPolicy: {
+        policy_name: "全家_1",
+        shifts: [
+          { start_time: "08:00", end_time: "12:00" },
+          { start_time: "13:00", end_time: "17:00" }
+        ]
+      },
       policyFields: [
         { key: "policy_name", label: "Policy Name" },
         { key: "description", label: "Description" },

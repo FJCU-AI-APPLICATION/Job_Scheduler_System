@@ -18,7 +18,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
   && echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 # set work directory
-WORKDIR /usr/src
+WORKDIR /usr/src/app
 
 COPY . .
 COPY ./envs ./envs

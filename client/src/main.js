@@ -25,6 +25,11 @@ import '@syncfusion/ej2-navigations/styles/material.css';
 import '@syncfusion/ej2-popups/styles/material.css';
 import '@syncfusion/ej2-schedule/styles/material.css';
 
+//
+import { registerLicense } from '@syncfusion/ej2-base';
+
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NNaF1cWWhPYVJpR2Nbek55flVHallRVAciSV9jS3tTc0dmWXZecXFVQGFfVk90Vg==');
+
 // Global SCSS for sidebar theme
 // import "vue-bootstrap-sidebar/dist/vue-bootstrap-sidebar.css";
 // import "vue-bootstrap-sidebar/src/scss/default-theme.scss";
