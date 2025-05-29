@@ -23,7 +23,6 @@ class EmployeeDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
 
-
 class EmployeeUnavailabilityListCreateView(generics.ListCreateAPIView):
     """
     List all unavailable day records for a specific employee.

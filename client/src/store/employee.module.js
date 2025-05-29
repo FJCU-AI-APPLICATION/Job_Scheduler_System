@@ -20,10 +20,12 @@ import {
   SET_NEXT_URL,
   SET_PREV_URL,
   SET_EMPLOYEE_COUNT,
+  SET_CURRENT_EMPLOYEE,
   SET_SHOW_MODAL
 } from "@/store/mutations.type";
 
 const initialState = {
+  current: null,
   results: [],
   count: 0,
   next: null,
@@ -64,14 +66,21 @@ export const actions = {
 
   async [CREATE_EMPLOYEE](context, payload) {
     const { data } = await EmployeeService.create(payload);
+    console.log("actions - CREATE_EMPLOYEE 資料：", data);
     context.commit(ADD_EMPLOYEE, data);
     return data;
   },
 
   async [UPDATE_EMPLOYEE](context, { id, payload }) {
-    const { data } = await EmployeeService.update(id, payload);
-    context.commit(UPDATE_EMPLOYEE_IN_LIST, data);
-    return data;
+    try {
+      const { data } = await EmployeeService.update(id, payload);
+      console.log("actions - UPDATE_EMPLOYEE(byID) 資料：", data);
+      context.commit(UPDATE_EMPLOYEE_IN_LIST, data);
+      return data;
+    } catch (error) {
+      console.log("更新失敗", error)
+      throw error;
+    }
   },
 
   async [DELETE_EMPLOYEE](context, id) {
@@ -81,6 +90,10 @@ export const actions = {
 };
 
 export const mutations = {
+  [SET_CURRENT_EMPLOYEE](state, emp) {
+    console.log("✅ SET_CURRENT_EMPLOYEE 被呼叫，設定為：", emp);
+    state.current = emp;
+  },
   [SET_EMPLOYEES](state, payload) {
     state.results = Array.isArray(payload) ? payload : [];
     // console.log("mutations: SET_EMPLOYEES", state.results);
@@ -94,14 +107,14 @@ export const mutations = {
     if (idx !== -1) {
       Vue.set(state.results, idx, emp);
     }
-    if (state.current.id === emp.id) {
+    if (state.current && state.current.id === emp.id) {
       state.current = emp;
     }
   },
 
   [REMOVE_EMPLOYEE](state, id) {
     state.results = state.results.filter((e) => e.id !== id);
-    if (state.current.id === id) {
+    if (state.current && state.current.id === id) {
       Object.assign(state.current, initialState.current);
     }
   },

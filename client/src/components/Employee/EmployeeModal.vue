@@ -85,8 +85,9 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click="$emit('update:modelValue', false)">取消</button>
+            <button class="btn btn-secondary" @click="onCancel">取消</button>
             <button class="btn btn-primary" :disabled="!isFormValid" @click="onOk">送出</button>
+            <!-- $emit('update:modelValue', false)" -->
           </div>
         </div>
       </div>
@@ -121,7 +122,14 @@ export default {
   emits: ["update:modelValue", "submit"],
   data() {
     return {
-      form: { ...this.initialEmployee },
+      form: {
+          name: "",
+          age: null,
+          phone: "",
+          identity: "FULL",
+          salary_type: "MONTH",
+          ...(this.initialEmployee || {})
+      },
       nameState: null,
       ageState: null,
       phoneState: null,
@@ -151,6 +159,9 @@ export default {
         this.identityState !== false &&
         this.salaryTypeState !== false
       );
+    // },
+    // currentEmployee() {
+    //   return this.$store.state.employee.current;
     }
   },
   methods: {
@@ -188,7 +199,11 @@ export default {
     validateSalaryType() {
       this.salaryTypeState =
         this.form.salary_type === "MONTH" || this.form.salary_type === "HOUR";
-    }
+    },
+    onCancel() {
+      // this.$store.commit("employee/SET_CURRENT_EMPLOYEE", null);
+      this.$emit("update:modelValue", false);
+    },
   },
   mounted() {
     console.log('store actions:', this.$store._actions);

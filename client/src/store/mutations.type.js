@@ -23,6 +23,7 @@ export const RESET_EMPLOYEE_STATE = "resetEmployeeState";
 export const SET_NEXT_URL = "setNextUrl";
 export const SET_PREV_URL = "setPrevUrl";
 export const SET_EMPLOYEE_COUNT = "setEmployeeCount";
+export const SET_CURRENT_EMPLOYEE = "SET_CURRENT_EMPLOYEE";
 
 //for pagination
 export const SET_CURRENT_PAGE = "SET_CURRENT_PAGE";

@@ -6,6 +6,7 @@ router = DefaultRouter()
 
 urlpatterns = [
     path('', EmployeeListCreateView.as_view(), name='employee-list-create'),
+    path('<int:pk>/', EmployeeDetailView.as_view(), name='employee-detail'),
     path('unavailabilities/', EmployeeUnavailabilityListCreateView.as_view(), name='employee-unavailability-list'),
     path('unavailabilities/<int:pk>/', EmployeeUnavailabilityDetailView.as_view(), name='employee-unavailability-detail'),
     path('employee_shifts/', EmployeeShiftListView.as_view(), name='employee-shifts'),

@@ -59,7 +59,7 @@ import {
   UPDATE_EMPLOYEE, 
   DELETE_EMPLOYEE
 } from "@/store/actions.type";
-import { SET_CURRENT_PAGE } from "@/store/mutations.type";
+import { SET_CURRENT_PAGE, SET_CURRENT_EMPLOYEE } from "@/store/mutations.type";
 
 export default {
   name: "EmployeePage",
@@ -132,6 +132,7 @@ export default {
         salary_type: "MONTH"
       };
       this.showModal = true;
+      // this.$store.commit(`employee/${SET_CURRENT_EMPLOYEE}`, null);
       // this.showModal = false; // Show the modal when creating
 
       // this.$nextTick(() => {
@@ -141,6 +142,7 @@ export default {
     openEdit(emp) {
       this.isEdit = true;
       this.editingEmployee = emp;
+      // this.$store.commit(`employee/${SET_CURRENT_EMPLOYEE}`, emp);
       this.showModal = true; // Show the modal when editing
     },
 
@@ -154,6 +156,7 @@ export default {
 
     handleSubmit(empData) {
       console.log("🧾 送出資料的 ID：", empData.id);
+      // console.log("🧾 送出的資料：", empData);
 
       const action = this.isEdit ? `employee/${UPDATE_EMPLOYEE}` : `employee/${CREATE_EMPLOYEE}`;
       this.$store

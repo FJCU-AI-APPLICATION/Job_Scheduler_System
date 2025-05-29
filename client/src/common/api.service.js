@@ -134,6 +134,7 @@ export const EmployeeService = {
   // 更新員工
   update(id, data) {
     return ApiService.update("employee", id, data);
+    // return ApiService.update("employee", id, data).then(res => res.data);
   },
   // 刪除員工
   destroy(id) {

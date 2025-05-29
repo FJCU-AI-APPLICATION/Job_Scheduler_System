@@ -10,6 +10,8 @@
     head-variant="dark"
     empty-text="目前尚無員工資料"
   >
+  <!-- @row-clicked="handleSelectEmployee" -->
+  
     <!-- Index 列 -->
     <template #cell(index)="row">
       {{ row.item.index }}
@@ -34,6 +36,8 @@
 </template>
 
 <script>
+import { SET_CURRENT_EMPLOYEE } from "@/store/mutations.type";
+
 export default {
   name: "EmployeeTable",
   props: {
@@ -49,6 +53,13 @@ export default {
       type: Number,
       required: true
     }
+  },
+  methods: {
+    // handleSelectEmployee(employee) {
+    //   console.log("🚀 員工被選取：", employee);
+    //   this.$store.commit(`employee/${SET_CURRENT_EMPLOYEE}`, employee);
+    //   // this.$emit("openModal");
+    // }
   },
   computed: {
     fields() {
