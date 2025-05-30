@@ -84,6 +84,24 @@ export default {
 <style lang="scss">
 @import "node_modules/vue-bootstrap-sidebar/src/scss/default-theme";
 
+.list-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  gap: 0.5rem;
+  align-items: center;
+  // height: 40%;  
+  // border-radius: 0.5rem;  /* 或試 8px */
+  // border: 1px solid #ddd;
+}
+
+.list-group .list-group-item {
+  // justify-content: center;
+  align-items: center;
+  width: 80%;
+  // border: 1px solid #ff0000;
+}
+
 .navbar-items {
   display: flex;
   flex-wrap: nowrap;
