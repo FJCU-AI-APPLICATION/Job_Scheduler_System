@@ -61,3 +61,17 @@ table tbody td {
 .main > div.active {
   display: block;
 }
+
+#sidebarButton.hidden {
+  background: url("/ShiftX_Logo_icon.png") no-repeat center center;
+  background-size: contain;
+  width: 40px;
+  height: 40px;
+  border: none;
+}
+
+#sidebarButton.hidden .bar1,
+#sidebarButton.hidden .bar2,
+#sidebarButton.hidden .bar3 {
+  display: none;
+}

@@ -6,6 +6,11 @@
     :fa="true"
     @sidebarChanged="onSidebarChanged"
   >
+  
+    <template v-slot:header>
+      <img src="/ShiftX_Logo_20250503.png" alt="Logo" style="max-height: 50px;" />
+    </template>
+
     <template v-slot:navbar>
       <b-navbar
         id="mainNavbar"
@@ -41,7 +46,8 @@ export default {
     },
     header: {
       type: String,
-      default: "<h3>Sidebar</h3>"
+      // default: "<h3>Sidebar</h3>"      
+      default: `<img src="/ShiftX_Logo_20250503.png" alt="Logo" style="max-height: 50px;" />`
     },
     links: {
       type: Array,
