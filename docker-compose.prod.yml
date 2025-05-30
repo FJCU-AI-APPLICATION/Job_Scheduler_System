@@ -28,30 +28,43 @@ services:
     networks:
       - global-net
 
-  frontend:
-    build:
-      context: ./client
-      dockerfile: client.Dockerfile
-    command: npm run build
-    # volumes:
-    #   - ./client:/usr/src/frontend
-    networks:
-      - global-net
-    depends_on:
-      - backend
+  # frontend:
+  #   build:
+  #     context: ./client
+  #     dockerfile: client.prod.Dockerfile
+  #   # command: npm run build
+  #   # volumes:
+  #   #   - ./client:/usr/src/frontend
+  #   networks:
+  #     - global-net
+  #   depends_on:
+  #     - backend
+
+  # nginx:
+  #   image: nginx:alpine
+  #   restart: always
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf
+  #     - ./client/dist:/usr/share/nginx/html
+  #   networks:
+  #     - global-net
+  #   depends_on:
+  #     - backend
 
   nginx:
-    image: nginx:alpine
-    restart: always
+    build:
+      context: ./client
+      dockerfile: client.prod.Dockerfile
     ports:
       - "80:80"
     volumes:
       - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf
-      - ./client/dist:/usr/share/nginx/html
+    depends_on:
+      - backend
     networks:
       - global-net
-    depends_on:
-      - frontend
 
 networks:
   global-net:

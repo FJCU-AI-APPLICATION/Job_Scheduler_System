@@ -24,7 +24,8 @@ env = environ.Env(
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # 讀取指定 .env
-ENV_FILE = BASE_DIR / 'envs' / 'dev.env'
+# ENV_FILE = BASE_DIR / 'envs' / 'dev.env'
+ENV_FILE = BASE_DIR / 'envs' / env('ENV_FILE', default='dev.env')
 env.read_env(str(ENV_FILE))
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -33,7 +34,7 @@ SECRET_KEY = env('SECRET_KEY', default='unsafe-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '.ngrok-free.app']
 
 
 # Application definition

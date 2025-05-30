@@ -4,9 +4,10 @@ import Router from "vue-router";
 Vue.use(Router);
 
 export default new Router({
+  mode: "history",
   routes: [
     {
-      path: "/",
+      path: "/employee",
       name: "employee",
       component: () => import("@/views/Employee"),
       children: [
@@ -28,12 +29,12 @@ export default new Router({
       ]
     },
     {
-      path: "/",
+      path: "/policy",
       name: "policy",
       component: () => import("@/views/Policy")
     },
     {
-      path: "/",
+      path: "/schedule",
       name: "schedule",
       component: () => import("@/views/Schedule")
     }

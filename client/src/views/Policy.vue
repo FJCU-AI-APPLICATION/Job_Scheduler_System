@@ -5,6 +5,7 @@
     <!-- 新增 / 重新載入 按鈕 -->
     <div class="button-field mb-2">
       <b-button variant="success" @click="createPolicy">+ 新增班別</b-button>
+      <span>&nbsp;&nbsp;&nbsp;</span>
       <b-button variant="primary" @click="refreshList">重新載入</b-button>
     </div>
 
