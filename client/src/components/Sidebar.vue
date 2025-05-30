@@ -1,15 +1,15 @@
 <template>
   <BootstrapSidebar
     :initial-show="initialShow"
-    :links="links"
     :header="header"
+    :links="links"    
     :fa="true"
     @sidebarChanged="onSidebarChanged"
   >
   
-    <template v-slot:header>
+    <!-- <template v-slot:header>
       <img src="/ShiftX_Logo_20250503.png" alt="Logo" style="max-height: 50px;" />
-    </template>
+    </template> -->
 
     <template v-slot:navbar>
       <b-navbar
@@ -19,8 +19,11 @@
         variant="light"
         fixed="top"
       >
-        <b-navbar-nav>
-          <b-nav-item> Navbar </b-nav-item>
+        <b-navbar-nav class="navbar-items">
+          <b-nav-item>
+            <img src="/Fu_Jen_Catholic_University_logo.png" alt="Logo" style="height: 42px;" />
+          </b-nav-item>
+          <b-nav-item class="">FJU 113 AI專班 專題報告</b-nav-item>
         </b-navbar-nav>
       </b-navbar>
     </template>
@@ -69,7 +72,7 @@ export default {
         }
       ]
     }
-  },
+  },  
   methods: {
     onSidebarChanged(show) {
       this.$emit("sidebarChanged", show);
@@ -80,4 +83,15 @@ export default {
 
 <style lang="scss">
 @import "node_modules/vue-bootstrap-sidebar/src/scss/default-theme";
+
+.navbar-items {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.navbar-items > *:not(:last-child) {
+  margin-right: -1.5rem;
+}
 </style>
