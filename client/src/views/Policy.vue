@@ -69,19 +69,22 @@
 
     <div v-if="selectedPolicy" class="shift-table mt-4">
       <h4>Shifts for {{ selectedPolicy.policy_name }}</h4>
-      <b-table
-        :items="selectedPolicy.shifts || []"
+      <b-table        
+        :items="[selectedPolicy]"
         :fields="shiftFields"
-        small
+        striped        
+        hover
         bordered
         responsive
         head-variant="dark"
       >
+      <!-- small -->
+      <!-- :items="selectedPolicy.shifts || []" -->
         <template #cell(start_time)="data">
-          {{ data.item.start_time || "尚無時間" }}
+          <strong>{{ data.item.start_time || "尚無時間" }}</strong>
         </template>
         <template #cell(end_time)="data">
-          {{ data.item.end_time || "尚無時間" }}
+          <strong>{{ data.item.end_time || "尚無時間" }}</strong>
         </template>
       </b-table>
       <!-- // url = "policy/shiftpolicy" -->
@@ -134,7 +137,7 @@ export default {
       policyFields: [
         { key: "policy_name", label: "Policy Name" },
         { key: "description", label: "Description" },
-        { key: "actions", label: "操作" }
+        { key: "actions", label: "操作", thStyle: { width: "5%" } }
       ],
       shiftFields: [
         { key: "start_time", label: "Start Time" },
@@ -207,6 +210,7 @@ export default {
 
     selectPolicy(policy) {
       this.selectedPolicy = policy;
+      // console.log("👉 selectedPolicy:", policy);
     },
 
     async fetchPolicies() {
@@ -228,7 +232,7 @@ export default {
           }
           if (item.id) {
             grouped[item.id].shifts.push({
-              detail_id: item.id,
+              // detail_id: item.id,
               start_time: item.start_time,
               end_time: item.end_time
             });
@@ -272,7 +276,7 @@ export default {
         alert("儲存失敗，請稍後再試");
       }
     },
-    
+
     // async deletePolicy(policy) {
     async confirmDelete(policy) {
       if (!confirm(`確定刪除 ${policy.policy_name}？`)) return;

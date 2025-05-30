@@ -8,9 +8,21 @@ class AiModelSerializer(serializers.ModelSerializer):
 
 
 class PolicySerializer(serializers.ModelSerializer):
+    start_time = serializers.SerializerMethodField()
+    end_time = serializers.SerializerMethodField()
+    
     class Meta:
         model = Policy
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['id', 'policy_name', 'description', 'start_time', 'end_time']
+        
+    def get_start_time(self, obj):
+        shift = obj.shift_details.first()
+        return shift.start_time if shift else None
+
+    def get_end_time(self, obj):
+        shift = obj.shift_details.first()
+        return shift.end_time if shift else None
 
 
 class ShiftPolicySerializer(serializers.ModelSerializer):
