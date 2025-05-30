@@ -72,13 +72,21 @@ export const actions = {
 
   async [UPDATE_POLICY](context, { id, payload }) {
     const { data } = await PolicyService.update(id, payload);
+    console.log("(policy.module...)準備「編輯」的資料：", data);
     context.commit(UPDATE_POLICY_IN_LIST, data);
     return data;
   },
 
   async [DELETE_POLICY](context, id) {
-    await PolicyService.destroy(id);
-    context.commit(REMOVE_POLICY, id);
+    try {
+      console.log("(policy.module...)準備「刪除」的資料(byID)：", id);
+      await PolicyService.destroy(id);
+      // console.log("🚀 DELETE_POLICY action 收到 id：", id);
+      context.commit(REMOVE_POLICY, id);
+      // console.log("🗑️ DELETE_POLICY 成功刪除 API 資料");
+    } catch (error) {
+      console.error("刪除失敗：", error);
+    }    
   }
 };
 
@@ -97,16 +105,19 @@ export const mutations = {
     if (idx !== -1) {
       Vue.set(state.results, idx, policy);
     }
-    if (state.current.id === policy.id) {
-      state.current = policy;
+    if (state.selectedPolicy && state.selectedPolicy.id === policy.id) {
+      state.selectedPolicy = policy;
     }
+    // if (state.current.id === policy.id) {
+    //   state.current = policy;
+    // }
   },
 
   [REMOVE_POLICY](state, id) {
     state.results = state.results.filter((e) => e.id !== id);
-    if (state.current.id === id) {
-      Object.assign(state.current, initialState.current);
-    }
+    // if (state.current.id === id) {
+    //   Object.assign(state.current, initialState.current);
+    // }
   },
 
   [SET_CURRENT_PAGE](state, page) {

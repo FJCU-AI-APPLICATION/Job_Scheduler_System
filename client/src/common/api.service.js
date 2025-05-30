@@ -153,7 +153,7 @@ export const PolicyService = {
   },
   // 新增政策
   create(data) {
-    return ApiService.post("policy", data);
+    return ApiService.post("policy/", data);
   },
   // 更新政策
   update(id, data) {
@@ -161,7 +161,7 @@ export const PolicyService = {
   },
   // 刪除政策
   destroy(id) {
-    return ApiService.delete(`policy/${id}`);
+    return ApiService.delete(`policy/${id}/`);
   }
 };
 

@@ -86,9 +86,10 @@ export default {
 
 .navbar-items {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
-  width: 100%;
+  width: 100%;  
 }
 
 .navbar-items > *:not(:last-child) {
