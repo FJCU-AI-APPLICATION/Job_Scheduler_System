@@ -57,3 +57,4 @@ nginx/
 *.bak
 *.log
 *.DS_Store
+*.conf
