@@ -37,6 +37,7 @@ export default new Router({
       path: "/schedule",
       name: "schedule",
       component: () => import("@/views/Schedule")
+      // component: () => import("@/views/Timesheet")
     }
     // {
     //   name: "login",

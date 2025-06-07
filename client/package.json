@@ -10,6 +10,7 @@
     "axios": "^0.19.0",
     "bootstrap-vue": "^2.23.1",
     "date-fns": "^1.30.1",
+    "daypilot-pro-vue": "https://npm.daypilot.org/daypilot-pro-vue/trial/2023.4.5820.tar.gz",
     "marked": "^0.7.0",
     "register-service-worker": "^1.6.2",
     "vue": "^2.6.10",
