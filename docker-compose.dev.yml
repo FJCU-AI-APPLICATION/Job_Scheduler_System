@@ -42,6 +42,18 @@ services:
     networks:
       - global-net
 
+  # ngrok-frontend:
+  #   image: wernight/ngrok
+  #   container_name: ngrok-frontend
+  #   command: http frontend:8080
+  #   ports:
+  #     - "4041:4040" # ngrok Web UI for frontend
+  #   environment:
+  #     - NGROK_AUTHTOKEN=你的-ngrok-authtoken
+  #   depends_on:
+  #     - frontend
+  #   networks:
+  #     - global-net
 
 networks:
   global-net:

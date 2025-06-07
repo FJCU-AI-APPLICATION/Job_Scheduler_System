@@ -3,9 +3,13 @@ import Router from "vue-router";
 
 Vue.use(Router);
 
-export default new Router({
+const router = new Router({
   mode: "history",
   routes: [
+    {
+      path: '/',
+      redirect: '/login'
+    },
     {
       path: "/employee",
       name: "employee",
@@ -37,13 +41,12 @@ export default new Router({
       path: "/schedule",
       name: "schedule",
       component: () => import("@/views/Schedule")
-      // component: () => import("@/views/Timesheet")
+    },
+    {
+      name: "login",
+      path: "/login",
+      component: () => import("@/views/Login")
     }
-    // {
-    //   name: "login",
-    //   path: "/login",
-    //   component: () => import("@/views/Login")
-    // },
     // {
     //   name: "register",
     //   path: "/register",
@@ -87,3 +90,17 @@ export default new Router({
     // }
   ]
 });
+
+router.beforeEach((to, from, next) => {
+  // const isLoggedIn = localStorage.getItem("loggedIn"); // 假設登入後有設定這個
+  const isLoggedIn = sessionStorage.getItem("loggedIn");
+  if (to.path !== "/login" && !isLoggedIn) {
+    next("/login");
+  } else if (to.path === "/login" && isLoggedIn) {
+    next("/employee");
+  } else {
+    next();
+  }
+});
+
+export default router;
