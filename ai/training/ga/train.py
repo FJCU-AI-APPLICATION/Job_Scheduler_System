@@ -52,7 +52,7 @@ def train_ga(
     print(f"Running NSGA-II GA: {generations} generations, pop_size={pop_size}")
     print(f"  cxpb={cxpb}, mutpb={mutpb}, indpb={indpb}")
     print(f"  Problem: {problem.num_employees} employees, {problem.num_shifts} shifts")
-    print(f"  Objectives: imbalance, constraint_violations, back_to_back")
+    print("  Objectives: imbalance, constraint_violations, back_to_back")
     print()
 
     result = optimizer.run(ga_config, verbose=True)

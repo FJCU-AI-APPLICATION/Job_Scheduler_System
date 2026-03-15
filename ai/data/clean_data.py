@@ -158,7 +158,7 @@ def clean_all(input_dir: str, output_dir: str) -> None:
             all_dfs.append(df)
             print(f"  → {len(df)} shift records")
         else:
-            print(f"  → skipped (no valid data)")
+            print("  → skipped (no valid data)")
 
     if not all_dfs:
         print("No valid data found.")
@@ -197,12 +197,12 @@ def clean_all(input_dir: str, output_dir: str) -> None:
     print(f"Schedule summary: {summary_path}")
 
     # Print summary
-    print(f"\nDataset overview:")
+    print("\nDataset overview:")
     print(f"  Date range: {combined['date'].min().date()} to {combined['date'].max().date()}")
     print(f"  Employees: {combined['employee_id'].nunique()}")
     print(f"  Total shifts: {len(combined)}")
     print(f"  Distinct shift patterns: {combined[['shift_start', 'shift_end']].drop_duplicates().shape[0]}")
-    print(f"\nPer-employee summary:")
+    print("\nPer-employee summary:")
     print(summary.to_string(index=False))
 
 

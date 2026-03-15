@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, time
 from typing import Optional
 
+from backend.app.models.employee import Employee
 from sqlalchemy import DateTime, ForeignKey, String, Text, Time, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
