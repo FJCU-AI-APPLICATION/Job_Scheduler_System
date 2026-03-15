@@ -1,3 +1,0 @@
-@api_server = http://127.0.0.1:8000/api/employee/full_detail/
-@employee_id=1
-GET {{api_server}}?employee_id={{employee_id}} HTTP/1.1

@@ -1,32 +1,66 @@
-version: '3.0'
 services:
   database:
-    image: microsoft/mssql-server-linux
+    image: postgres:16-alpine
     container_name: database
-    user: root
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - ./database/mssql_data:/var/opt/mssql/data
-      - ./database/mssql_backup:/backup
-    env_file: 
-      - ./server/envs/dev.env
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - global-net
 
   backend:
     build:
-      context: ./server
-      dockerfile: server.Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
+      context: ./backend
+      dockerfile: Dockerfile
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - .:/usr/src/app/
+      - ./backend:/usr/src
     ports:
       - "8002:8000"
-    env_file: './server/envs/dev.env'
-    restart: "always"
+    env_file: ./backend/envs/dev.env
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
     networks:
       - global-net
+
+  ai-server:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    command: uv run uvicorn server.main:app --host 0.0.0.0 --port 8001 --reload
+    volumes:
+      - ./ai:/usr/src
+    ports:
+      - "8003:8001"
+    restart: always
+    networks:
+      - global-net
+
+  frontend:
+    image: nginx:alpine
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - global-net
+
+volumes:
+  postgres_data:
 
 networks:
   global-net:

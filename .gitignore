@@ -1,16 +1,32 @@
-#backend
-server/venv
-server/envs
-server/apps/__pycache__
-server/employee/__pycache__
-server/schedule/migrations
-server/schedule/__pycache__
-server/employee/migrations
-server/policy/migrations
-server/policy/__pycache__
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
 
-#AI
-AI/__pycache__
-AI/venv
-AI/RL/__pycache__
+# uv
+.python-version
 
+# Environment
+**/envs/*.env
+
+# AI checkpoints (large files)
+ai/checkpoints/*.pth
+
+# Database
+postgres_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic
+backend/alembic/versions/*.pyc
