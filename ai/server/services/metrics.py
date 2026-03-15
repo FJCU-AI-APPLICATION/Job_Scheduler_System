@@ -1,4 +1,8 @@
-"""Shared schedule quality metrics computation."""
+"""Schedule quality metrics — each metric is a separate scoring function.
+
+Individual functions can be imported and used independently.
+The orchestrator `compute_metrics()` delegates to all of them.
+"""
 
 from models.problem import jain_fairness_index
 from server.schemas import (
@@ -9,45 +13,61 @@ from server.schemas import (
 )
 
 
-def compute_metrics(
-    assignments: list[ShiftAssignment],
-    request: SchedulingRequest,
-    hours_by_employee: dict[int, int],
-) -> ScheduleMetrics:
-    """Compute comprehensive schedule quality metrics."""
-    shifts_per_day = len(request.shifts)
-    num_shifts = request.days * shifts_per_day
+def compute_fairness(hours_by_employee: dict[int, int]) -> tuple[float, float]:
+    """Compute fairness scores from per-employee hour totals.
 
-    # Build unavailability lookup by employee_id
-    unavail_set: set[tuple[int, int]] = set()
-    for u in request.unavailability:
-        unavail_set.add((u.day, u.employee_id))
-
+    Returns:
+        (fairness_score, jain_index) where:
+        - fairness_score: 1 - (max-min)/max, range [0, 1]
+        - jain_index: Jain's fairness index, range [1/n, 1]
+    """
     hours_values = list(hours_by_employee.values())
-
-    # Fairness scores
     max_h = max(hours_values) if hours_values else 0
     min_h = min(hours_values) if hours_values else 0
     fairness_score = 1.0 - (max_h - min_h) / max(max_h, 1)
     jain_idx = jain_fairness_index(hours_values)
+    return fairness_score, jain_idx
 
-    # Constraint violations
+
+def compute_violations(
+    assignments: list[ShiftAssignment],
+    request: SchedulingRequest,
+    hours_by_employee: dict[int, int],
+) -> ConstraintViolations:
+    """Count constraint violations: unavailability and max hours."""
+    unavail_set: set[tuple[int, int]] = {
+        (u.day, u.employee_id) for u in request.unavailability
+    }
+
     unavail_violations = sum(
         1 for a in assignments if (a.day, a.employee_id) in unavail_set
     )
     max_hours_violations = sum(
-        1 for emp in request.employees if hours_by_employee.get(emp.id, 0) > emp.max_hours
+        1
+        for emp in request.employees
+        if hours_by_employee.get(emp.id, 0) > emp.max_hours
     )
 
-    violations = ConstraintViolations(
+    return ConstraintViolations(
         unavailability_violations=unavail_violations,
         max_hours_violations=max_hours_violations,
         total_violations=unavail_violations + max_hours_violations,
     )
 
-    # Back-to-back rate
-    back_to_back = 0
+
+def compute_back_to_back_rate(
+    assignments: list[ShiftAssignment],
+    shifts_per_day: int,
+) -> float:
+    """Compute the rate of back-to-back shifts assigned to the same employee.
+
+    Returns a value in [0, 1] where 0 means no back-to-back assignments.
+    """
+    if len(assignments) <= 1:
+        return 0.0
+
     sorted_assignments = sorted(assignments, key=lambda a: (a.day, a.shift_index))
+    back_to_back = 0
     for i in range(len(sorted_assignments) - 1):
         curr = sorted_assignments[i]
         nxt = sorted_assignments[i + 1]
@@ -56,23 +76,60 @@ def compute_metrics(
         if nxt_global == curr_global + 1 and curr.employee_id == nxt.employee_id:
             back_to_back += 1
 
-    back_to_back_rate = back_to_back / max(len(assignments) - 1, 1)
+    return back_to_back / (len(assignments) - 1)
 
-    # Coverage rate
-    coverage_rate = len(assignments) / max(num_shifts, 1)
 
-    # Shift type distribution: employee_id -> {shift_index: count}
-    shift_type_dist: dict[int, dict[int, int]] = {e.id: {} for e in request.employees}
+def compute_coverage_rate(
+    assignments: list[ShiftAssignment],
+    total_shifts: int,
+) -> float:
+    """Compute the fraction of shift slots that are filled.
+
+    Returns a value in [0, 1] where 1 means all slots are staffed.
+    """
+    if total_shifts <= 0:
+        return 0.0
+    return len(assignments) / total_shifts
+
+
+def compute_shift_type_distribution(
+    assignments: list[ShiftAssignment],
+    employee_ids: list[int],
+) -> dict[int, dict[int, int]]:
+    """Compute how many of each shift type each employee is assigned.
+
+    Returns: {employee_id: {shift_index: count}}
+    """
+    dist: dict[int, dict[int, int]] = {eid: {} for eid in employee_ids}
     for a in assignments:
-        dist = shift_type_dist[a.employee_id]
-        dist[a.shift_index] = dist.get(a.shift_index, 0) + 1
+        emp_dist = dist[a.employee_id]
+        emp_dist[a.shift_index] = emp_dist.get(a.shift_index, 0) + 1
+    return dist
+
+
+def compute_metrics(
+    assignments: list[ShiftAssignment],
+    request: SchedulingRequest,
+    hours_by_employee: dict[int, int],
+) -> ScheduleMetrics:
+    """Compute all schedule quality metrics by delegating to individual scorers."""
+    shifts_per_day = len(request.shifts)
+    total_shifts = request.days * shifts_per_day
+
+    fairness_score, jain_idx = compute_fairness(hours_by_employee)
+    violations = compute_violations(assignments, request, hours_by_employee)
+    b2b_rate = compute_back_to_back_rate(assignments, shifts_per_day)
+    coverage = compute_coverage_rate(assignments, total_shifts)
+    shift_dist = compute_shift_type_distribution(
+        assignments, [e.id for e in request.employees]
+    )
 
     return ScheduleMetrics(
         fairness_score=round(fairness_score, 4),
         jain_fairness_index=round(jain_idx, 4),
         total_hours_by_employee=hours_by_employee,
         constraint_violations=violations,
-        back_to_back_rate=round(back_to_back_rate, 4),
-        coverage_rate=round(coverage_rate, 4),
-        shift_type_distribution=shift_type_dist,
+        back_to_back_rate=round(b2b_rate, 4),
+        coverage_rate=round(coverage, 4),
+        shift_type_distribution=shift_dist,
     )
