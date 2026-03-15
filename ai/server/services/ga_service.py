@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+from deap import algorithms, base, creator, tools
 
 from server.schemas import (
     ScheduleMetrics,
@@ -9,20 +10,26 @@ from server.schemas import (
     ShiftAssignment,
 )
 
+# Register DEAP types once at module level
+if not hasattr(creator, "FitnessMax"):
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+if not hasattr(creator, "Individual"):
+    creator.create("Individual", list, fitness=creator.FitnessMax)
+
 
 def run_ga_inference(
     request: SchedulingRequest,
     generations: int = 100,
     pop_size: int = 50,
 ) -> SchedulingResponse:
-    """Run Genetic Algorithm optimization for scheduling."""
+    """Run DEAP Genetic Algorithm optimization for scheduling."""
     num_employees = len(request.employees)
     shifts_per_day = len(request.shifts)
     num_shifts = request.days * shifts_per_day
     shift_lengths = [s.length_hours for s in request.shifts]
     max_hours = {i: e.max_hours for i, e in enumerate(request.employees)}
 
-    # Build unavailability lookup: (day, emp_idx) -> unavailable
+    # Build unavailability lookup
     unavail_set: set[tuple[int, int]] = set()
     for u in request.unavailability:
         emp_idx = next(
@@ -32,9 +39,9 @@ def run_ga_inference(
         if emp_idx is not None:
             unavail_set.add((u.day, emp_idx))
 
-    def fitness(schedule: np.ndarray) -> float:
+    def fitness(individual: list[int]) -> tuple[float]:
         hours_assigned = np.zeros(num_employees)
-        for i, emp_idx in enumerate(schedule):
+        for i, emp_idx in enumerate(individual):
             shift_type = i % shifts_per_day
             hours_assigned[emp_idx] += shift_lengths[shift_type]
 
@@ -49,43 +56,55 @@ def run_ga_inference(
 
         # Penalty for back-to-back shifts by same employee
         back_to_back = sum(
-            1 for i in range(num_shifts - 1) if schedule[i] == schedule[i + 1]
+            1 for i in range(num_shifts - 1) if individual[i] == individual[i + 1]
         )
 
         # Penalty for unavailable assignments
         unavail_penalty = 0
-        for i, emp_idx in enumerate(schedule):
+        for i, emp_idx in enumerate(individual):
             day = i // shifts_per_day
             if (day, emp_idx) in unavail_set:
                 unavail_penalty += 10
 
-        return -(balance_penalty + exceed_penalty * 2 + back_to_back + unavail_penalty)
+        return (-(balance_penalty + exceed_penalty * 2 + back_to_back + unavail_penalty),)
 
-    # Generate initial population
-    population = [
-        np.random.randint(0, num_employees, size=num_shifts) for _ in range(pop_size)
-    ]
+    # Build DEAP toolbox for this specific request
+    toolbox = base.Toolbox()
+    toolbox.register("attr_emp", random.randint, 0, num_employees - 1)
+    toolbox.register(
+        "individual",
+        tools.initRepeat,
+        creator.Individual,
+        toolbox.attr_emp,
+        n=num_shifts,
+    )
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("evaluate", fitness)
+    toolbox.register("mate", tools.cxTwoPoint)
+    toolbox.register(
+        "mutate",
+        tools.mutUniformInt,
+        low=0,
+        up=num_employees - 1,
+        indpb=0.05,
+    )
+    toolbox.register("select", tools.selTournament, tournsize=3)
 
-    for _ in range(generations):
-        population.sort(key=fitness, reverse=True)
-        new_population = [population[0]]  # Keep best (elitism)
+    hof = tools.HallOfFame(1)
+    population = toolbox.population(n=pop_size)
 
-        for _ in range(pop_size - 1):
-            parent1, parent2 = random.sample(population[: max(10, pop_size // 5)], 2)
-            point = np.random.randint(1, num_shifts - 1)
-            child = np.concatenate((parent1[:point], parent2[point:]))
+    algorithms.eaSimple(
+        population,
+        toolbox,
+        cxpb=0.7,
+        mutpb=0.2,
+        ngen=generations,
+        halloffame=hof,
+        verbose=False,
+    )
 
-            # Mutation
-            if random.random() < 0.1:
-                idx = np.random.randint(0, num_shifts)
-                child[idx] = np.random.randint(0, num_employees)
-
-            new_population.append(child)
-
-        population = new_population
-
-    # Best solution
-    best = max(population, key=fitness)
+    # Best solution from HallOfFame
+    best = hof[0]
 
     # Convert to response
     assignments: list[ShiftAssignment] = []

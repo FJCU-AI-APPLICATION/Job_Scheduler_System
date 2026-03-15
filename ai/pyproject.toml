@@ -8,6 +8,11 @@ dependencies = [
     "torch>=2.5.0",
     "numpy>=2.0.0",
     "pydantic>=2.10.0",
+    "gymnasium>=1.0.0",
+    "stable-baselines3>=2.3.0",
+    "sb3-contrib>=2.3.0",
+    "deap>=1.4.1",
+    "tensorboard>=2.17.0",
 ]
 
 [tool.hatch.build.targets.wheel]

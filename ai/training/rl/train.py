@@ -1,130 +1,181 @@
-# train.py
+"""
+Train an RL agent for shift scheduling using Stable-Baselines3.
+
+Supports MaskablePPO (default), DQN, PPO, and A2C.
+MaskablePPO is recommended as it handles unavailability constraints natively
+during training via action masking.
+
+Usage:
+    python -m training.rl.train --algorithm maskable_ppo --total-timesteps 500000
+    python -m training.rl.train --algorithm dqn --total-timesteps 200000 --lr 1e-4
+"""
 
 import argparse
-import numpy as np
-import torch
-import torch.optim as optim
-import torch.nn as nn
-import random
-from model import DQN, ReplayBuffer
-from environment import SchedulingEnv, NUM_EMPLOYEES
-from typing import Tuple
+import json
+import sys
+from pathlib import Path
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from sb3_contrib import MaskablePPO
+from stable_baselines3 import A2C, DQN, PPO
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 
-def train_dqn(
-    episodes=2000,
-    batch_size=64,
-    gamma=0.99,
-    lr=1e-3,
-    epsilon_start=1.0,
-    epsilon_end=0.01,
-    epsilon_decay=500,
-    checkpoint="model.pth"
-):
-    """
-    Train a DQN agent on GPU (if available), save checkpoint.
-    """
-    env = SchedulingEnv()
-    state_dim = env.num_employees + 1  # (shift_index + assigned_hours)
-    action_dim = env.num_employees
+from models.environment import EnvironmentConfig, SchedulingEnv
 
-    dqn = DQN(state_dim, action_dim).to(device)
-    optimizer = optim.Adam(dqn.parameters(), lr=lr)
-    replay_buffer = ReplayBuffer()
-
-    epsilon = epsilon_start
-    epsilon_decay_rate = (epsilon_start - epsilon_end) / epsilon_decay
-
-    def epsilon_greedy_action(state_np: np.ndarray) -> int:
-        if random.random() < epsilon:
-            return random.randint(0, action_dim - 1)
-        else:
-            with torch.no_grad():
-                state_v = torch.FloatTensor(state_np).unsqueeze(0).to(device)
-                q_values = dqn(state_v)
-                return int(torch.argmax(q_values, dim=1).item())
-
-    def update_model():
-        if len(replay_buffer) < batch_size:
-            return
-        states, actions, rewards, next_states, dones = replay_buffer.sample(batch_size)
-
-        states_v = torch.FloatTensor(states).to(device)
-        actions_v = torch.LongTensor(actions).to(device)
-        rewards_v = torch.FloatTensor(rewards).to(device)
-        next_states_v = torch.FloatTensor(next_states).to(device)
-        dones_v = torch.FloatTensor(dones).to(device)
-
-        # current Q
-        q_values = dqn(states_v)
-        q_values = q_values.gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
-
-        # next Q
-        with torch.no_grad():
-            next_q_values = dqn(next_states_v).max(1)[0]
-            target_q = rewards_v + gamma * next_q_values * (1 - dones_v)
-
-        loss = nn.MSELoss()(q_values, target_q)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    all_rewards = []
-    for episode in range(episodes):
-        state = env.reset()
-        total_reward = 0.0
-        done = False
-
-        while not done:
-            action = epsilon_greedy_action(state)
-            next_state, reward, done, _ = env.step(action)
-            replay_buffer.push(state, action, reward, next_state, done)
-            state = next_state
-            total_reward += reward
-
-            # update
-            update_model()
-
-            # decay epsilon
-            if epsilon > epsilon_end:
-                epsilon -= epsilon_decay_rate
-                if epsilon < epsilon_end:
-                    epsilon = epsilon_end
-
-        all_rewards.append(total_reward)
-        if (episode+1) % 500 == 0:
-            avg_r = np.mean(all_rewards[-500:])
-            print(f"Episode {episode+1}, Epsilon={epsilon:.3f}, AvgReward={avg_r:.2f}")
-
-    # Save checkpoint
-    torch.save(dqn.state_dict(), checkpoint)
-    print(f"\nTraining complete, model saved to {checkpoint}")
+ALGORITHM_MAP = {
+    "maskable_ppo": MaskablePPO,
+    "dqn": DQN,
+    "ppo": PPO,
+    "a2c": A2C,
+}
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--episodes", type=int, default=10000, help="Number of training episodes.")
-    parser.add_argument("--checkpoint", type=str, default="result/model.pth", help="Checkpoint file path.")
-    parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--epsilon_start", type=float, default=1.0)
-    parser.add_argument("--epsilon_end", type=float, default=0.01)
-    parser.add_argument("--epsilon_decay", type=float, default=500)
+def make_env(config: EnvironmentConfig) -> SchedulingEnv:
+    return SchedulingEnv(config)
+
+
+def train(
+    algorithm: str = "maskable_ppo",
+    total_timesteps: int = 500_000,
+    learning_rate: float = 3e-4,
+    checkpoint_dir: str = "checkpoints",
+    tb_log_dir: str = "logs",
+    eval_freq: int = 5_000,
+    checkpoint_freq: int = 10_000,
+    net_arch: list[int] | None = None,
+) -> None:
+    if algorithm not in ALGORITHM_MAP:
+        print(f"Unknown algorithm: {algorithm}. Choose from: {list(ALGORITHM_MAP.keys())}")
+        sys.exit(1)
+
+    if net_arch is None:
+        net_arch = [64, 64]
+
+    config = EnvironmentConfig()
+    env = make_env(config)
+    eval_env = make_env(config)
+
+    algo_cls = ALGORITHM_MAP[algorithm]
+    checkpoint_path = Path(checkpoint_dir)
+    checkpoint_path.mkdir(parents=True, exist_ok=True)
+
+    model = algo_cls(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        learning_rate=learning_rate,
+        tensorboard_log=tb_log_dir,
+        policy_kwargs=dict(net_arch=net_arch),
+    )
+
+    callbacks = [
+        EvalCallback(
+            eval_env,
+            best_model_save_path=str(checkpoint_path),
+            eval_freq=eval_freq,
+            n_eval_episodes=10,
+            deterministic=True,
+        ),
+        CheckpointCallback(
+            save_freq=checkpoint_freq,
+            save_path=str(checkpoint_path),
+            name_prefix="rl_model",
+        ),
+    ]
+
+    print(f"Training {algorithm} for {total_timesteps} timesteps...")
+    print(f"  Net arch: {net_arch}")
+    print(f"  Learning rate: {learning_rate}")
+    print(f"  Checkpoints: {checkpoint_path}")
+    print(f"  TensorBoard logs: {tb_log_dir}")
+
+    model.learn(
+        total_timesteps=total_timesteps,
+        callback=callbacks,
+        tb_log_name=algorithm,
+    )
+
+    final_path = checkpoint_path / "final_model"
+    model.save(str(final_path))
+
+    # Save metadata for loading
+    metadata = {
+        "algorithm": algorithm,
+        "total_timesteps": total_timesteps,
+        "learning_rate": learning_rate,
+        "net_arch": net_arch,
+        "env_config": {
+            "num_employees": config.num_employees,
+            "employee_types": config.employee_types,
+            "days": config.days,
+            "shifts_per_day": config.shifts_per_day,
+            "shift_lengths": config.shift_lengths,
+            "ft_max_hours": config.ft_max_hours,
+            "pt_max_hours": config.pt_max_hours,
+        },
+    }
+    metadata_path = checkpoint_path / "model_metadata.json"
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2)
+
+    print(f"\nTraining complete.")
+    print(f"  Final model: {final_path}.zip")
+    print(f"  Best model: {checkpoint_path / 'best_model.zip'}")
+    print(f"  Metadata: {metadata_path}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Train RL scheduling agent with SB3")
+    parser.add_argument(
+        "--algorithm",
+        type=str,
+        default="maskable_ppo",
+        choices=list(ALGORITHM_MAP.keys()),
+        help="RL algorithm to use (default: maskable_ppo)",
+    )
+    parser.add_argument(
+        "--total-timesteps",
+        type=int,
+        default=500_000,
+        help="Total training timesteps (default: 500000)",
+    )
+    parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate (default: 3e-4)")
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=str,
+        default="checkpoints",
+        help="Directory for saving checkpoints",
+    )
+    parser.add_argument(
+        "--tb-log-dir",
+        type=str,
+        default="logs",
+        help="TensorBoard log directory",
+    )
+    parser.add_argument("--eval-freq", type=int, default=5000, help="Evaluation frequency")
+    parser.add_argument(
+        "--checkpoint-freq", type=int, default=10000, help="Checkpoint save frequency"
+    )
+    parser.add_argument(
+        "--net-arch",
+        type=int,
+        nargs="+",
+        default=[64, 64],
+        help="Policy network architecture (default: 64 64)",
+    )
 
     args = parser.parse_args()
 
-    train_dqn(
-        episodes=args.episodes,
-        batch_size=args.batch_size,
-        gamma=args.gamma,
-        lr=args.lr,
-        epsilon_start=args.epsilon_start,
-        epsilon_end=args.epsilon_end,
-        epsilon_decay=args.epsilon_decay,
-        checkpoint=args.checkpoint
+    train(
+        algorithm=args.algorithm,
+        total_timesteps=args.total_timesteps,
+        learning_rate=args.lr,
+        checkpoint_dir=args.checkpoint_dir,
+        tb_log_dir=args.tb_log_dir,
+        eval_freq=args.eval_freq,
+        checkpoint_freq=args.checkpoint_freq,
+        net_arch=args.net_arch,
     )
+
 
 if __name__ == "__main__":
     main()

@@ -10,9 +10,9 @@ router = APIRouter(prefix="/predict", tags=["inference"])
 @router.post("/rl", response_model=SchedulingResponse)
 async def predict_rl(
     request: SchedulingRequest,
-    checkpoint: str = Query("model.pth"),
+    checkpoint: str = Query("best_model.zip"),
 ) -> SchedulingResponse:
-    """Run DQN inference for schedule optimization."""
+    """Run SB3 model inference for schedule optimization."""
     return run_rl_inference(request, checkpoint=checkpoint)
 
 
