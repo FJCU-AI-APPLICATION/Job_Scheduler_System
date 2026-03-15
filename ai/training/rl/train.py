@@ -48,7 +48,7 @@ def train(
         sys.exit(1)
 
     if net_arch is None:
-        net_arch = [64, 64]
+        net_arch = [128, 64]
 
     config = EnvironmentConfig()
     env = make_env(config)
@@ -159,8 +159,8 @@ def main() -> None:
         "--net-arch",
         type=int,
         nargs="+",
-        default=[64, 64],
-        help="Policy network architecture (default: 64 64)",
+        default=[128, 64],
+        help="Policy network architecture (default: 128 64)",
     )
 
     args = parser.parse_args()

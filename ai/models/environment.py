@@ -1,33 +1,38 @@
-from dataclasses import dataclass, field
-
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
+from pydantic import BaseModel
+
+from models.problem import jain_fairness_index
 
 
-@dataclass
-class EnvironmentConfig:
+class EnvironmentConfig(BaseModel):
     """Configurable scheduling environment parameters."""
 
     num_employees: int = 7
-    employee_types: list[str] = field(
-        default_factory=lambda: ["FT", "FT", "FT", "FT", "PT", "PT", "PT"]
-    )
+    employee_types: list[str] = ["FT", "FT", "FT", "FT", "PT", "PT", "PT"]
     days: int = 30
     shifts_per_day: int = 3
-    shift_lengths: list[int] = field(default_factory=lambda: [9, 8, 7])
+    shift_lengths: list[int] = [9, 8, 7]
     ft_max_hours: int = 160
     pt_max_hours: int = 40
-    unavailability: set[tuple[int, int]] = field(default_factory=set)
+    unavailability: set[tuple[int, int]] = set()
 
 
 class SchedulingEnv(gym.Env):
     """
     Gymnasium-compliant multi-shift-per-day scheduling environment.
 
-    State = (shift_index, assigned_hours[0], ..., assigned_hours[num_employees-1])
-    Action = which employee to assign to the current shift.
+    Rich state representation (~30 features):
+      - Normalized progress (shift_index / num_shifts)
+      - Current day normalized (day / num_days)
+      - Shift type one-hot (shifts_per_day dims)
+      - Day-of-week one-hot (7 dims)
+      - Normalized hours assigned per employee (num_employees dims)
+      - Hours remaining to max per employee (num_employees dims)
+      - Availability mask per employee (num_employees dims)
 
+    Action = which employee to assign to the current shift (Discrete).
     Supports action masking via action_masks() for sb3-contrib MaskablePPO.
     """
 
@@ -39,29 +44,40 @@ class SchedulingEnv(gym.Env):
         self.num_employees = self.config.num_employees
         self.num_shifts = self.config.days * self.config.shifts_per_day
         self.shift_lengths = self.config.shift_lengths
-        self.max_hours_for_employee = [
-            self.config.ft_max_hours if t == "FT" else self.config.pt_max_hours
-            for t in self.config.employee_types
-        ]
+        self.max_hours_for_employee = np.array(
+            [
+                self.config.ft_max_hours if t == "FT" else self.config.pt_max_hours
+                for t in self.config.employee_types
+            ],
+            dtype=np.float32,
+        )
         self.unavailability = self.config.unavailability
 
-        max_possible_hours = max(self.config.ft_max_hours, self.config.pt_max_hours)
+        # Observation dimensions:
+        # 1 (progress) + 1 (day) + shifts_per_day (shift onehot) + 7 (weekday onehot)
+        # + num_employees (norm hours) + num_employees (hours remaining) + num_employees (avail mask)
+        self._obs_dim = (
+            1  # normalized progress
+            + 1  # normalized day
+            + self.config.shifts_per_day  # shift type one-hot
+            + 7  # day-of-week one-hot
+            + self.num_employees  # normalized hours assigned
+            + self.num_employees  # normalized hours remaining
+            + self.num_employees  # availability mask
+        )
 
         self.observation_space = spaces.Box(
             low=0.0,
-            high=np.array(
-                [float(self.num_shifts)]
-                + [float(max_possible_hours)] * self.num_employees,
-                dtype=np.float32,
-            ),
-            shape=(self.num_employees + 1,),
+            high=1.0,
+            shape=(self._obs_dim,),
             dtype=np.float32,
         )
         self.action_space = spaces.Discrete(self.num_employees)
 
-        self._state: tuple[int, ...] | None = None
+        # Internal state
+        self._shift_index: int = 0
+        self._hours: np.ndarray = np.zeros(self.num_employees, dtype=np.float32)
         self._previous_employee: int | None = None
-        self.reset()
 
     def reset(
         self,
@@ -70,14 +86,14 @@ class SchedulingEnv(gym.Env):
         options: dict | None = None,
     ) -> tuple[np.ndarray, dict]:
         super().reset(seed=seed)
-        self._state = (0,) + tuple([0] * self.num_employees)
+        self._shift_index = 0
+        self._hours = np.zeros(self.num_employees, dtype=np.float32)
         self._previous_employee = None
         return self._get_observation(), {}
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
-        assert self._state is not None
-        shift_index = self._state[0]
-        hours = list(self._state[1:])
+        shift_index = self._shift_index
+        current_day = shift_index // self.config.shifts_per_day
 
         reward = 0.0
 
@@ -85,31 +101,35 @@ class SchedulingEnv(gym.Env):
         if self._previous_employee is not None and action == self._previous_employee:
             reward -= 2.0
 
-        # Penalize large differences in assigned hours among employees
-        gap = max(hours) - min(hours)
-        reward -= 0.01 * gap
+        # Fairness penalty using Jain's index complement (scaled up)
+        if self._hours.sum() > 0:
+            jain = jain_fairness_index(self._hours)
+            reward -= 0.1 * (1.0 - jain)
 
-        # Pick shift length by shift_index % shifts_per_day
+        # Pick shift length
         shift_type = shift_index % len(self.shift_lengths)
         shift_length = self.shift_lengths[shift_type]
 
         # Assign hours
-        hours[action] += shift_length
+        self._hours[action] += shift_length
 
-        # Penalty for exceeding max hours
-        if hours[action] > self.max_hours_for_employee[action]:
-            reward -= 5.0
+        # Penalty for exceeding max hours (increased from -5 to -10)
+        if self._hours[action] > self.max_hours_for_employee[action]:
+            reward -= 10.0
 
-        # Base reward for valid assignment
-        reward += 1.0
+        # Penalty for assigning unavailable employee
+        if (current_day, action) in self.unavailability:
+            reward -= 10.0
 
-        shift_index += 1
+        # Base reward (reduced from 1.0 to 0.5 for better signal-to-noise)
+        reward += 0.5
+
+        self._shift_index += 1
         self._previous_employee = action
 
-        terminated = shift_index >= self.num_shifts
+        terminated = self._shift_index >= self.num_shifts
         truncated = False
 
-        self._state = (shift_index,) + tuple(hours)
         return self._get_observation(), reward, terminated, truncated, {}
 
     def action_masks(self) -> np.ndarray:
@@ -118,12 +138,10 @@ class SchedulingEnv(gym.Env):
         Used by sb3-contrib MaskablePPO/MaskableDQN.
         Masks out employees who are unavailable on the current day.
         """
-        assert self._state is not None
         mask = np.ones(self.num_employees, dtype=np.bool_)
 
-        shift_index = self._state[0]
-        if shift_index < self.num_shifts:
-            current_day = shift_index // self.config.shifts_per_day
+        if self._shift_index < self.num_shifts:
+            current_day = self._shift_index // self.config.shifts_per_day
 
             for emp_idx in range(self.num_employees):
                 if (current_day, emp_idx) in self.unavailability:
@@ -136,5 +154,46 @@ class SchedulingEnv(gym.Env):
         return mask
 
     def _get_observation(self) -> np.ndarray:
-        assert self._state is not None
-        return np.array(self._state, dtype=np.float32)
+        obs = np.zeros(self._obs_dim, dtype=np.float32)
+        idx = 0
+
+        # 1. Normalized progress
+        obs[idx] = self._shift_index / max(self.num_shifts, 1)
+        idx += 1
+
+        # 2. Normalized current day
+        current_day = self._shift_index // self.config.shifts_per_day if self._shift_index < self.num_shifts else self.config.days - 1
+        obs[idx] = current_day / max(self.config.days - 1, 1)
+        idx += 1
+
+        # 3. Shift type one-hot
+        if self._shift_index < self.num_shifts:
+            shift_type = self._shift_index % self.config.shifts_per_day
+            obs[idx + shift_type] = 1.0
+        idx += self.config.shifts_per_day
+
+        # 4. Day-of-week one-hot (0=Monday .. 6=Sunday)
+        dow = current_day % 7
+        obs[idx + dow] = 1.0
+        idx += 7
+
+        # 5. Normalized hours assigned per employee
+        max_h = self.max_hours_for_employee.copy()
+        max_h[max_h == 0] = 1.0  # avoid division by zero
+        obs[idx : idx + self.num_employees] = self._hours / max_h
+        idx += self.num_employees
+
+        # 6. Normalized hours remaining to max
+        remaining = np.maximum(self.max_hours_for_employee - self._hours, 0.0)
+        obs[idx : idx + self.num_employees] = remaining / max_h
+        idx += self.num_employees
+
+        # 7. Availability mask (1=available, 0=unavailable)
+        if self._shift_index < self.num_shifts:
+            for emp_idx in range(self.num_employees):
+                obs[idx + emp_idx] = 0.0 if (current_day, emp_idx) in self.unavailability else 1.0
+        else:
+            obs[idx : idx + self.num_employees] = 1.0
+        idx += self.num_employees
+
+        return obs

@@ -31,9 +31,20 @@ class ShiftAssignment(BaseModel):
     employee_id: int
 
 
+class ConstraintViolations(BaseModel):
+    unavailability_violations: int
+    max_hours_violations: int
+    total_violations: int
+
+
 class ScheduleMetrics(BaseModel):
     fairness_score: float
+    jain_fairness_index: float
     total_hours_by_employee: dict[int, int]
+    constraint_violations: ConstraintViolations
+    back_to_back_rate: float
+    coverage_rate: float
+    shift_type_distribution: dict[int, dict[int, int]]  # employee_id -> {shift_idx: count}
 
 
 class SchedulingResponse(BaseModel):
