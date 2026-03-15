@@ -97,7 +97,7 @@ def main() -> None:
                 "Count": counts,
             }
         )
-        st.bar_chart(dist_df.set_index("EmployeeIndex")["Count"], use_container_width=True)
+        st.bar_chart(dist_df.set_index("EmployeeIndex").Count, use_container_width=True)
         st.write("Total shifts = ", len(schedule))
 
         # Quality metrics

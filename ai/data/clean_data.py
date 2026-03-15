@@ -89,7 +89,7 @@ def load_and_clean_excel(file_path: str) -> pd.DataFrame:
     # Build date column
     if "year" in df.columns and "month" in df.columns and "day" in df.columns:
         df["date"] = pd.to_datetime(
-            dict(year=df["year"], month=df["month"], day=df["day"]),
+            dict(year=df.year, month=df.month, day=df.day),
             errors="coerce",
         )
         df = df.dropna(subset=["date"])
@@ -104,7 +104,7 @@ def load_and_clean_excel(file_path: str) -> pd.DataFrame:
 
     records = []
     for _, row in df.iterrows():
-        date = row["date"]
+        date = row.date
         for emp in employees:
             start_col = f"{emp}_s"
             end_col = f"{emp}_e"
@@ -198,8 +198,8 @@ def clean_all(input_dir: str, output_dir: str) -> None:
 
     # Print summary
     print("\nDataset overview:")
-    print(f"  Date range: {combined['date'].min().date()} to {combined['date'].max().date()}")
-    print(f"  Employees: {combined['employee_id'].nunique()}")
+    print(f"  Date range: {combined.date.min().date()} to {combined.date.max().date()}")
+    print(f"  Employees: {combined.employee_id.nunique()}")
     print(f"  Total shifts: {len(combined)}")
     print(f"  Distinct shift patterns: {combined[['shift_start', 'shift_end']].drop_duplicates().shape[0]}")
     print("\nPer-employee summary:")

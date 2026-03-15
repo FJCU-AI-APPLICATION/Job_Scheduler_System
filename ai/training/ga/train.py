@@ -23,6 +23,7 @@ from pathlib import Path
 from models.environment import EnvironmentConfig
 from models.ga_optimizer import GAConfig, GAOptimizer
 from models.problem import SchedulingProblem, jain_fairness_index
+from server.schemas import GAConfigSnapshot, GAFitnessResult, GATrainResult
 
 
 def train_ga(
@@ -62,31 +63,31 @@ def train_ga(
     output_path.mkdir(parents=True, exist_ok=True)
 
     best_fitness = result.best_fitness
-    ga_result = {
-        "schedule": result.best_schedule,
-        "fitness": {
-            "imbalance": best_fitness[0],
-            "constraint_violations": best_fitness[1],
-            "back_to_back": best_fitness[2],
-        },
-        "pareto_front_size": len(result.pareto_front),
-        "config": {
-            "num_employees": problem.num_employees,
-            "employee_types": list(problem.employee_types),
-            "days": problem.days,
-            "shifts_per_day": problem.shifts_per_day,
-            "shift_lengths": list(problem.shift_lengths),
-            "generations": generations,
-            "pop_size": pop_size,
-            "cxpb": cxpb,
-            "mutpb": mutpb,
-            "indpb": indpb,
-        },
-    }
+    ga_result = GATrainResult(
+        schedule=result.best_schedule,
+        fitness=GAFitnessResult(
+            imbalance=best_fitness[0],
+            constraint_violations=best_fitness[1],
+            back_to_back=best_fitness[2],
+        ),
+        pareto_front_size=len(result.pareto_front),
+        config=GAConfigSnapshot(
+            num_employees=problem.num_employees,
+            employee_types=list(problem.employee_types),
+            days=problem.days,
+            shifts_per_day=problem.shifts_per_day,
+            shift_lengths=list(problem.shift_lengths),
+            generations=generations,
+            pop_size=pop_size,
+            cxpb=cxpb,
+            mutpb=mutpb,
+            indpb=indpb,
+        ),
+    )
 
     result_path = output_path / "ga_best_schedule.json"
     with open(result_path, "w") as f:
-        json.dump(ga_result, f, indent=2)
+        json.dump(ga_result.model_dump(), f, indent=2)
 
     if result.logbook is not None:
         logbook_path = output_path / "ga_logbook.pkl"

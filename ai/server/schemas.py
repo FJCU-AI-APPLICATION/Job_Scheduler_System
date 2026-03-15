@@ -50,3 +50,29 @@ class ScheduleMetrics(BaseModel):
 class SchedulingResponse(BaseModel):
     schedule: list[ShiftAssignment]
     metrics: ScheduleMetrics
+
+
+class GAFitnessResult(BaseModel):
+    imbalance: float
+    constraint_violations: float
+    back_to_back: float
+
+
+class GAConfigSnapshot(BaseModel):
+    num_employees: int
+    employee_types: list[str]
+    days: int
+    shifts_per_day: int
+    shift_lengths: list[int]
+    generations: int
+    pop_size: int
+    cxpb: float
+    mutpb: float
+    indpb: float
+
+
+class GATrainResult(BaseModel):
+    schedule: list[int]
+    fitness: GAFitnessResult
+    pareto_front_size: int
+    config: GAConfigSnapshot

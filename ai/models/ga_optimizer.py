@@ -16,9 +16,13 @@ from pydantic import BaseModel, ConfigDict
 from models.problem import SchedulingProblem, get_device
 
 # Register DEAP creator types once at module level
-if not hasattr(creator, "FitnessMulti"):
+try:
+    creator.FitnessMulti
+except AttributeError:
     creator.create("FitnessMulti", base.Fitness, weights=(-1.0, -1.0, -1.0))
-if not hasattr(creator, "Individual"):
+try:
+    creator.Individual
+except AttributeError:
     creator.create("Individual", list, fitness=creator.FitnessMulti)
 
 
