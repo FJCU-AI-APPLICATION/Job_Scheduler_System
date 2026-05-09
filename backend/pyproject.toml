@@ -16,7 +16,14 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["app"]
+packages = [
+    "src/api",
+    "src/core",
+    "src/db",
+    "src/domain",
+    "src/schemas",
+    "src/services",
+]
 
 [build-system]
 requires = ["hatchling"]

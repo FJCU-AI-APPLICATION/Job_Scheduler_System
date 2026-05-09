@@ -8,6 +8,7 @@ dependencies = [
     "torch>=2.5.0",
     "numpy>=2.0.0",
     "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
     "gymnasium>=1.0.0",
     "stable-baselines3>=2.3.0",
     "sb3-contrib>=2.3.0",
@@ -19,7 +20,16 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["server", "models"]
+packages = [
+    "src/agents",
+    "src/api",
+    "src/core",
+    "src/data",
+    "src/domain",
+    "src/optimizers",
+    "src/services",
+    "src/training",
+]
 
 [build-system]
 requires = ["hatchling"]

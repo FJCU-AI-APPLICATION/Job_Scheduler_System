@@ -22,7 +22,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uv run uvicorn main:app --app-dir src --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/usr/src
     ports:
@@ -39,7 +39,7 @@ services:
     build:
       context: ./ai
       dockerfile: Dockerfile
-    command: uv run uvicorn server.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uv run uvicorn main:app --app-dir src --host 0.0.0.0 --port 8001 --reload
     volumes:
       - ./ai:/usr/src
     ports:
@@ -49,11 +49,18 @@ services:
       - global-net
 
   frontend:
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: sh -c "cd /usr/src && uv sync --no-dev && cd src && uv run python main.py"
+    environment:
+      BACKEND_URL: http://backend:8000
+      GRADIO_SERVER_NAME: 0.0.0.0
+      PYTHONPATH: /usr/src/src
     volumes:
-      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend:/usr/src
     ports:
-      - "8080:80"
+      - "8080:7860"
     depends_on:
       - backend
     networks:
