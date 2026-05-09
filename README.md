@@ -20,10 +20,17 @@ Then open http://localhost:8080.
 ## Repo layout
 
 ```
-backend/    FastAPI service — flat src/ modules (api, core, db, domain, schemas, services)
-ai/         AI service       — flat src/ modules (api, core, domain, agents, optimizers,
-                                                  services, training, data)
-frontend/   Gradio service   — flat src/ modules (api_client, core, views)
+src/backend/    FastAPI subpackage   (api, core, db, domain, schemas, services)
+src/ai/         AI subpackage        (api, core, domain, agents, optimizers,
+                                      services, training, data)
+src/frontend/   Gradio subpackage    (api_client, core, views)
+alembic/        DB migrations (backend)
+envs/           per-env config (dev.env, ...)
+data/           training datasets
+notebooks/      research notebooks
+checkpoints/    trained model artifacts
+pyproject.toml  one project; deps split via [project.optional-dependencies] {ai,backend,frontend}
+Dockerfile      one image; docker-compose runs three containers with different commands
 docker-compose.yml
 ```
 
