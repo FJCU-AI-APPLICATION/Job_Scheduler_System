@@ -20,14 +20,16 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    command: uv run uvicorn main:app --app-dir src --host 0.0.0.0 --port 8000 --reload
+    image: job-scheduler-system
+    command: uv run uvicorn backend.main:app --app-dir src --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./backend:/usr/src
+      - ./:/app
+      - /app/.venv
     ports:
       - "8002:8000"
-    env_file: ./backend/envs/dev.env
+    env_file: ./envs/dev.env
     restart: always
     depends_on:
       database:
@@ -36,29 +38,28 @@ services:
       - global-net
 
   ai-server:
-    build:
-      context: ./ai
-      dockerfile: Dockerfile
-    command: uv run uvicorn main:app --app-dir src --host 0.0.0.0 --port 8001 --reload
+    image: job-scheduler-system
+    command: uv run uvicorn ai.main:app --app-dir src --host 0.0.0.0 --port 8001 --reload
     volumes:
-      - ./ai:/usr/src
+      - ./:/app
+      - /app/.venv
     ports:
       - "8003:8001"
     restart: always
+    depends_on:
+      - backend
     networks:
       - global-net
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    command: sh -c "cd /usr/src && uv sync --no-dev && cd src && uv run python main.py"
+    image: job-scheduler-system
+    command: uv run python -m frontend.main
     environment:
       BACKEND_URL: http://backend:8000
       GRADIO_SERVER_NAME: 0.0.0.0
-      PYTHONPATH: /usr/src/src
     volumes:
-      - ./frontend:/usr/src
+      - ./:/app
+      - /app/.venv
     ports:
       - "8080:7860"
     depends_on:
