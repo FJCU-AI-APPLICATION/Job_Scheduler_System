@@ -1,10 +1,19 @@
-"""Single inference service that dispatches to any registered optimizer."""
+"""Single inference service that dispatches to any registered optimizer.
+
+The dispatch generalizes over optimizer families: the route handler builds
+a dict of validated query params; the dispatch passes them straight to the
+optimizer's config_class. Pydantic config models reject unknown keys, so
+mis-routed knobs surface at config-build time, not at solve time.
+"""
+
+from typing import Any
 
 from fastapi import HTTPException
 
 from ai.domain.problem import ScheduleConverter, SchedulingProblem
 from ai.domain.schemas import SchedulingRequest, SchedulingResponse
 from ai.optimizers.base import Optimizer
+from ai.optimizers.cpsat import CPSATInfeasibleError, CPSATTimeoutError
 from ai.optimizers.result import CCMOResult
 from ai.services.metrics import compute_metrics
 
@@ -12,20 +21,25 @@ from ai.services.metrics import compute_metrics
 def run_optimizer_inference(
     algorithm: str,
     request: SchedulingRequest,
-    generations: int = 100,
-    pop_size: int = 50,
-    device: str = "cpu",
+    config_overrides: dict[str, Any] | None = None,
 ) -> SchedulingResponse:
     """Dispatch to the named optimizer; convert its best schedule to the API response."""
     problem = SchedulingProblem.from_request(request)
     optimizer = Optimizer.create(algorithm, problem)
+    config = optimizer.config_class(**(config_overrides or {}))
 
-    config = optimizer.config_class(
-        generations=generations,
-        pop_size=pop_size,
-        device=device,
-    )
-    result = optimizer.run(config)
+    try:
+        result = optimizer.run(config)
+    except CPSATInfeasibleError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Instance is infeasible (stage={e.stage}, status={e.status_name})",
+        )
+    except CPSATTimeoutError as e:
+        raise HTTPException(
+            status_code=504,
+            detail=f"Solver budget exhausted (stage={e.stage}, elapsed={e.elapsed_s:.1f}s)",
+        )
 
     if isinstance(result, CCMOResult) and result.fell_back_to_auxiliary:
         raise HTTPException(
