@@ -42,14 +42,22 @@ The AI service ships two evolutionary optimizers, both registered on the `Optimi
 |---|---|---|
 | `nsga2` | `ai.optimizers.nsga2.NSGAIIOptimizer` | EvoTorch `GeneticAlgorithm` with day-aligned crossover, uniform-int mutation, and a vectorized repair operator |
 | `ccmo` | `ai.optimizers.ccmo.CCMOOptimizer` | Constrained MOEA via Coevolution (Tian et al. 2021); Pop1 selects under Deb's constraint-domination, Pop2 explores unconstrained |
+| `cpsat` | `ai.optimizers.cpsat.CPSATOptimizer` | Exact baseline via OR-Tools CP-SAT; lexicographic two-stage (minimize back-to-back, then min-max hours spread); single optimal schedule per run |
 
-Inference: `POST /predict/evolutionary/{algorithm}` — e.g. `/predict/evolutionary/nsga2`. The legacy `POST /predict/ga` is **deprecated** and forwards to `nsga2`.
+Inference: `POST /predict/evolutionary/{algorithm}` — e.g. `/predict/evolutionary/nsga2`. The legacy `POST /predict/ga` is **deprecated** and forwards to `nsga2`. For exact ground-truth schedules at the default size, use `POST /predict/cpsat` (see the CP-SAT row above).
 
 ### Training
 
 ```bash
 python -m ai.training.evolutionary --algorithm nsga2 --generations 200 --pop-size 100
 python -m ai.training.evolutionary --algorithm ccmo  --generations 200 --pop-size 100 --device cuda
+```
+
+For an exact baseline:
+
+```bash
+python -m ai.training.cpsat                                       # default 30s/stage budget
+python -m ai.training.cpsat --timeout-s-per-stage 60 --seed 42    # tighter run
 ```
 
 ### Benchmark
