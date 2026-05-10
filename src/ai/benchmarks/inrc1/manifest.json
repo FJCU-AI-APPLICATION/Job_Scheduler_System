@@ -1,0 +1,14 @@
+{
+  "sprint": [
+    {"name": "sprint01", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint02", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint03", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint04", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint05", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint06", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint07", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint08", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint09", "num_nurses": 10, "num_days": 28},
+    {"name": "sprint10", "num_nurses": 10, "num_days": 28}
+  ]
+}
