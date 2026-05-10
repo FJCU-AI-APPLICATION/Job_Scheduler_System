@@ -36,7 +36,7 @@ docker-compose.yml
 
 ## Optimizers
 
-The AI service ships two evolutionary optimizers, both registered on the `Optimizer` ABC and selectable by name:
+The AI service ships three optimizers — two evolutionary and one exact — all registered on the `Optimizer` ABC and selectable by name:
 
 | Algorithm | Module | Notes |
 |---|---|---|
