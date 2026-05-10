@@ -10,6 +10,7 @@ def test_init_subclass_registers(tiny_problem):
     available = Optimizer.list_available()
     assert "nsga2" in available
     assert "ccmo" in available
+    assert "cpsat" in available
 
 
 def test_create_returns_concrete_optimizer(tiny_problem):
@@ -27,6 +28,7 @@ def test_create_unknown_raises(tiny_problem):
     assert "Unknown optimizer" in str(exc.value)
     assert "nsga2" in str(exc.value)
     assert "ccmo" in str(exc.value)
+    assert "cpsat" in str(exc.value)
 
 
 def test_list_available_returns_sorted_names():
