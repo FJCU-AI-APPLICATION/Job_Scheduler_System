@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 
@@ -146,6 +148,46 @@ class BenchmarkReport(BaseModel):
     config_summary: dict
     per_run: list[BenchmarkRunRecord]
     aggregate: list[BenchmarkAggregate]
+
+
+class CPSATConfigSnapshot(BaseModel):
+    num_employees: int
+    employee_types: list[str]
+    days: int
+    shifts_per_day: int
+    shift_lengths: list[int]
+    timeout_s_per_stage: float
+    num_workers: int
+    objective_priority: list[str]
+    seed: int | None = None
+
+
+class CPSATTrainResult(BaseModel):
+    schedule: list[int]
+    b2b_count: int
+    spread: int
+    jain_index: float
+    stages: list["CPSATStageResult"]
+    config: CPSATConfigSnapshot
+
+
+# Resolve the CPSATStageResult forward reference used in CPSATTrainResult.stages.
+# We import directly from the result sub-module file rather than through
+# ai.optimizers (whose __init__ triggers base → domain.problem → schemas, a cycle).
+import importlib.util as _ilu
+import sys as _sys
+
+if "ai.optimizers.result" not in _sys.modules:
+    _spec = _ilu.spec_from_file_location(
+        "ai.optimizers.result",
+        __file__.replace("domain/schemas.py", "optimizers/result.py"),
+    )
+    _mod = _ilu.module_from_spec(_spec)  # type: ignore[arg-type]
+    _sys.modules["ai.optimizers.result"] = _mod
+    _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+
+CPSATStageResult = _sys.modules["ai.optimizers.result"].CPSATStageResult
+CPSATTrainResult.model_rebuild()
 
 
 # === One-release deprecation aliases ===
