@@ -26,6 +26,7 @@ ai = [
     "gymnasium>=1.0.0",
     "stable-baselines3>=2.3.0",
     "sb3-contrib>=2.3.0",
+    "evotorch>=0.5.1",
     "deap>=1.4.1",
     "tensorboard>=2.17.0",
     "sqlalchemy>=2.0.48",
@@ -36,12 +37,29 @@ frontend = [
     "gradio>=5.0.0",
     "httpx>=0.28.0",
 ]
+benchmarks = [
+    "pymoo>=0.6.1",
+    "scipy>=1.13.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-mock>=3.14",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = [
     "src/ai",
     "src/backend",
     "src/frontend",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=ai --cov-report=term-missing"
+markers = [
+    "slow: longer-running tests (>10s)",
+    "benchmark: tests that touch the INRC-I benchmark runner",
 ]
 
 [build-system]
