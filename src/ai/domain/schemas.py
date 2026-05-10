@@ -162,32 +162,22 @@ class CPSATConfigSnapshot(BaseModel):
     seed: int | None = None
 
 
+class CPSATStageResult(BaseModel):
+    """Per-stage record for the CP-SAT lex pipeline."""
+
+    objective: str          # "b2b" | "spread"
+    status: str             # "OPTIMAL" | "FEASIBLE"
+    objective_value: int
+    wall_clock_s: float
+
+
 class CPSATTrainResult(BaseModel):
     schedule: list[int]
     b2b_count: int
     spread: int
     jain_index: float
-    stages: list["CPSATStageResult"]
+    stages: list[CPSATStageResult]
     config: CPSATConfigSnapshot
-
-
-# Resolve the CPSATStageResult forward reference used in CPSATTrainResult.stages.
-# We import directly from the result sub-module file rather than through
-# ai.optimizers (whose __init__ triggers base → domain.problem → schemas, a cycle).
-import importlib.util as _ilu
-import sys as _sys
-
-if "ai.optimizers.result" not in _sys.modules:
-    _spec = _ilu.spec_from_file_location(
-        "ai.optimizers.result",
-        __file__.replace("domain/schemas.py", "optimizers/result.py"),
-    )
-    _mod = _ilu.module_from_spec(_spec)  # type: ignore[arg-type]
-    _sys.modules["ai.optimizers.result"] = _mod
-    _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
-
-CPSATStageResult = _sys.modules["ai.optimizers.result"].CPSATStageResult
-CPSATTrainResult.model_rebuild()
 
 
 # === One-release deprecation aliases ===

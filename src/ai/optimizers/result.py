@@ -12,6 +12,24 @@ the family layer.
 
 from pydantic import BaseModel, field_validator
 
+from ai.domain.schemas import CPSATStageResult
+
+__all__ = [
+    "CPSATStageResult",   # re-exported for callers that imported from here historically
+    "OptimizerConfig",
+    "EvolutionaryConfig",
+    "NSGAIIConfig",
+    "CCMOConfig",
+    "CPSATConfig",
+    "GAStepStatus",
+    "CCMOStepStatus",
+    "OptimizerResult",
+    "MultiObjectiveResult",
+    "NSGAIIResult",
+    "CCMOResult",
+    "CPSATResult",
+]
+
 
 # === Config hierarchy ===
 
@@ -98,13 +116,8 @@ class CCMOStepStatus(BaseModel):
     pop2_mean_violations: float
 
 
-class CPSATStageResult(BaseModel):
-    """Per-stage record for the CP-SAT lex pipeline."""
-
-    objective: str          # "b2b" | "spread"
-    status: str             # "OPTIMAL" | "FEASIBLE"
-    objective_value: int
-    wall_clock_s: float
+# CPSATStageResult lives in ai.domain.schemas (re-exported above) so the
+# checkpoint schema CPSATTrainResult can reference it without an import cycle.
 
 
 # === Result hierarchy ===
