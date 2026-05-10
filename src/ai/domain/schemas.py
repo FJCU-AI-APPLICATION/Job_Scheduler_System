@@ -52,13 +52,15 @@ class SchedulingResponse(BaseModel):
     metrics: ScheduleMetrics
 
 
-class GAFitnessResult(BaseModel):
+# === NSGA-II (renamed from GA*) ===
+
+class NSGAIIFitnessResult(BaseModel):
     imbalance: float
     constraint_violations: float
     back_to_back: float
 
 
-class GAConfigSnapshot(BaseModel):
+class NSGAIIConfigSnapshot(BaseModel):
     num_employees: int
     employee_types: list[str]
     days: int
@@ -69,10 +71,119 @@ class GAConfigSnapshot(BaseModel):
     cxpb: float
     mutpb: float
     indpb: float
+    tournament_size: int
+    elitist: bool
+    seed: int | None
+    device: str
 
 
-class GATrainResult(BaseModel):
+class NSGAIITrainResult(BaseModel):
     schedule: list[int]
-    fitness: GAFitnessResult
+    fitness: NSGAIIFitnessResult
     pareto_front_size: int
-    config: GAConfigSnapshot
+    config: NSGAIIConfigSnapshot
+
+
+# === CCMO ===
+
+class CCMOFitnessResult(BaseModel):
+    imbalance: float
+    constraint_violations: float
+    back_to_back: float
+
+
+class CCMOConfigSnapshot(BaseModel):
+    num_employees: int
+    employee_types: list[str]
+    days: int
+    shifts_per_day: int
+    shift_lengths: list[int]
+    generations: int
+    pop_size: int
+    cxpb: float
+    mutpb: float
+    indpb: float
+    tournament_size: int
+    seed: int | None
+    device: str
+
+
+class CCMOTrainResult(BaseModel):
+    schedule: list[int]
+    fitness: CCMOFitnessResult
+    feasible_front_size: int
+    auxiliary_front_size: int
+    fell_back_to_auxiliary: bool
+    config: CCMOConfigSnapshot
+
+
+# === Benchmark ===
+
+class BenchmarkRunRecord(BaseModel):
+    instance: str
+    algorithm: str
+    seed: int
+    hypervolume: float
+    feasible_front_size: int
+    best_imbalance: float
+    best_violations: float
+    best_b2b: int
+    wall_clock_s: float
+
+
+class BenchmarkAggregate(BaseModel):
+    instance: str
+    nsga2_hv_mean: float | None = None
+    nsga2_hv_std: float | None = None
+    nsga2_n_seeds: int = 0
+    ccmo_hv_mean: float | None = None
+    ccmo_hv_std: float | None = None
+    ccmo_n_seeds: int = 0
+    wilcoxon_p: float | None = None
+
+
+class BenchmarkReport(BaseModel):
+    config_summary: dict
+    per_run: list[BenchmarkRunRecord]
+    aggregate: list[BenchmarkAggregate]
+
+
+# === One-release deprecation aliases ===
+
+import warnings
+
+
+class GAFitnessResult(NSGAIIFitnessResult):
+    """Deprecated alias for NSGAIIFitnessResult."""
+
+    def __init__(self, **data):
+        warnings.warn(
+            "GAFitnessResult is deprecated; use NSGAIIFitnessResult",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class GAConfigSnapshot(NSGAIIConfigSnapshot):
+    """Deprecated alias for NSGAIIConfigSnapshot."""
+
+    def __init__(self, **data):
+        warnings.warn(
+            "GAConfigSnapshot is deprecated; use NSGAIIConfigSnapshot",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class GATrainResult(NSGAIITrainResult):
+    """Deprecated alias for NSGAIITrainResult."""
+
+    def __init__(self, **data):
+        warnings.warn(
+            "GATrainResult is deprecated; use NSGAIITrainResult",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
