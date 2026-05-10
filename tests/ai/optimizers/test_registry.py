@@ -9,7 +9,7 @@ def test_init_subclass_registers(tiny_problem):
     """Concrete subclasses with a 'name' attribute are auto-registered."""
     available = Optimizer.list_available()
     assert "nsga2" in available
-    # "ccmo" gets added in a later commit
+    assert "ccmo" in available
 
 
 def test_create_returns_concrete_optimizer(tiny_problem):
@@ -26,6 +26,7 @@ def test_create_unknown_raises(tiny_problem):
         Optimizer.create("does-not-exist", tiny_problem)
     assert "Unknown optimizer" in str(exc.value)
     assert "nsga2" in str(exc.value)
+    assert "ccmo" in str(exc.value)
 
 
 def test_list_available_returns_sorted_names():
