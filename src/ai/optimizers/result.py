@@ -1,15 +1,29 @@
-"""Algorithm-internal result schemas shared across optimizers.
+"""Algorithm-internal config and result schemas shared across optimizers.
 
-`OptimizerConfig` and `OptimizerResult` are the lowest common denominator
-that every optimizer must accept and return. Subclasses extend with
-algorithm-specific fields.
+Two layers of inheritance:
+  * Universal layer  — `OptimizerConfig` / `OptimizerResult` carry only
+    fields every optimizer family needs.
+  * Family layer     — `EvolutionaryConfig` / `MultiObjectiveResult`
+    add evolutionary-specific or multi-objective-specific fields.
+
+CP-SAT inherits the universal layer directly; NSGA-II and CCMO inherit
+the family layer.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+
+# === Config hierarchy ===
 
 
 class OptimizerConfig(BaseModel):
-    """Shared evolutionary hyperparameters."""
+    """Universal hyperparameters for any optimizer family."""
+
+    seed: int | None = None
+
+
+class EvolutionaryConfig(OptimizerConfig):
+    """Hyperparameters shared by all evolutionary optimizers."""
 
     generations: int = 200
     pop_size: int = 100
@@ -17,23 +31,49 @@ class OptimizerConfig(BaseModel):
     mutpb: float = 0.2
     indpb: float = 0.05
     tournament_size: int = 4
-    seed: int | None = None
     device: str = "cpu"
 
 
-class NSGAIIConfig(OptimizerConfig):
+class NSGAIIConfig(EvolutionaryConfig):
     """NSGA-II hyperparameters. `pop_size` is the single-population size."""
 
     elitist: bool = True
 
 
-class CCMOConfig(OptimizerConfig):
+class CCMOConfig(EvolutionaryConfig):
     """CCMO hyperparameters. `pop_size` is **per population** — CCMO maintains
     two coevolving populations of this size each, so total memory and
     per-generation evaluation count are 2 × pop_size.
     """
 
     pass
+
+
+_VALID_OBJECTIVE_PRIORITIES = (
+    ["b2b", "spread"],
+    ["spread", "b2b"],
+)
+
+
+class CPSATConfig(OptimizerConfig):
+    """CP-SAT exact-baseline hyperparameters."""
+
+    timeout_s_per_stage: float = 30.0
+    num_workers: int = 8
+    objective_priority: list[str] = ["b2b", "spread"]
+
+    @field_validator("objective_priority")
+    @classmethod
+    def _validate_priority(cls, v: list[str]) -> list[str]:
+        if v not in _VALID_OBJECTIVE_PRIORITIES:
+            raise ValueError(
+                f"Unsupported objective_priority {v}; "
+                "only ['b2b','spread'] or ['spread','b2b'] are valid until issue #16 lands"
+            )
+        return v
+
+
+# === Step-status types ===
 
 
 class GAStepStatus(BaseModel):
@@ -58,22 +98,44 @@ class CCMOStepStatus(BaseModel):
     pop2_mean_violations: float
 
 
+class CPSATStageResult(BaseModel):
+    """Per-stage record for the CP-SAT lex pipeline."""
+
+    objective: str          # "b2b" | "spread"
+    status: str             # "OPTIMAL" | "FEASIBLE"
+    objective_value: int
+    wall_clock_s: float
+
+
+# === Result hierarchy ===
+
+
 class OptimizerResult(BaseModel):
-    """Lowest-common-denominator result every optimizer must return."""
+    """Universal result every optimizer must return.
+
+    `best_fitness` is the same 3-tuple `(imbalance, violations, b2b)` for
+    every family, so the inference layer and any future benchmark runner
+    can index it uniformly. CP-SAT reports `(1 - jain_index, 0.0, b2b_count)`.
+    """
 
     best_schedule: list[int]
     best_fitness: tuple[float, float, float]
+
+
+class MultiObjectiveResult(OptimizerResult):
+    """Adds Pareto-front telemetry for multi-objective optimizers."""
+
     pareto_front: list[list[int]]
     pareto_fitnesses: list[tuple[float, float, float]]
 
 
-class NSGAIIResult(OptimizerResult):
+class NSGAIIResult(MultiObjectiveResult):
     """NSGA-II result. `pareto_front` is the rank-0 front."""
 
     step_history: list[GAStepStatus]
 
 
-class CCMOResult(OptimizerResult):
+class CCMOResult(MultiObjectiveResult):
     """CCMO result. `pareto_front` mirrors the *feasible* Pop1 rank-0 front
     (what most consumers want); auxiliary fields preserve dual-population
     telemetry for research scripts.
@@ -85,3 +147,13 @@ class CCMOResult(OptimizerResult):
     auxiliary_pareto_fitnesses: list[tuple[float, float, float]]
     step_history: list[CCMOStepStatus]
     fell_back_to_auxiliary: bool = False
+
+
+class CPSATResult(OptimizerResult):
+    """CP-SAT exact-baseline result. Single optimal schedule, no Pareto front."""
+
+    b2b_count: int
+    spread: int
+    jain_index: float
+    stages: list[CPSATStageResult]
+    total_wall_clock_s: float
