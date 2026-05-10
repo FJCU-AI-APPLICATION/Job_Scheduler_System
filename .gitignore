@@ -30,3 +30,9 @@ Thumbs.db
 
 # Alembic
 alembic/versions/*.pyc
+
+# Benchmark instances (downloaded on first use)
+data/benchmarks/inrc1/
+
+# Test coverage
+.coverage
