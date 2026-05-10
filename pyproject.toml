@@ -56,7 +56,8 @@ packages = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=ai --cov-report=term-missing"
+pythonpath = ["src"]
+addopts = "--cov=ai --cov-report=term-missing --import-mode=importlib"
 markers = [
     "slow: longer-running tests (>10s)",
     "benchmark: tests that touch the INRC-I benchmark runner",
