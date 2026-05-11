@@ -1,7 +1,11 @@
 """Hybrid IP + VNS / SA matheuristic for shift scheduling — issue #18.
 
-Outer loop: classical GVNS (Burke et al. EJOR 2017) cycling through three
-neighborhoods at expanding size k=1..k_max. On improvement, restart at k=1.
+References:
+  Burke et al. EJOR 258 (2017)         — hybrid IP + VNS on INRC-II
+  Ceschia et al. Annals OR 274 (2019)  — simulated-annealing matheuristic
+
+Outer loop: classical GVNS (Burke 2017) cycling through three neighborhoods
+at expanding size k=1..k_max. On improvement, restart at k=1.
 
 Inner re-optimization: restricted CP-SAT lex two-stage solve on the
 `optimize` slice, with `frozen` shifts bound-locked at their incumbent
