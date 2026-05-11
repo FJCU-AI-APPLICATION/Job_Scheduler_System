@@ -12,7 +12,7 @@ the family layer.
 
 from typing import Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from ai.domain.schemas import CPSATStageResult
 
@@ -202,12 +202,21 @@ class LastRLConfig(OptimizerConfig):
             )
         return v
 
-    @field_validator("epsilon_end")
+    @field_validator("epsilon_start", "epsilon_end")
     @classmethod
-    def _validate_epsilon(cls, v: float) -> float:
+    def _validate_epsilon_bounds(cls, v: float) -> float:
         if not 0.0 <= v <= 1.0:
-            raise ValueError(f"epsilon_end must be in [0, 1]; got {v}")
+            raise ValueError(f"epsilon must be in [0, 1]; got {v}")
         return v
+
+    @model_validator(mode="after")
+    def _validate_epsilon_schedule(self):
+        if self.epsilon_start < self.epsilon_end:
+            raise ValueError(
+                f"epsilon_start ({self.epsilon_start}) must be >= "
+                f"epsilon_end ({self.epsilon_end}) for the decaying schedule"
+            )
+        return self
 
 
 # === Step-status types ===

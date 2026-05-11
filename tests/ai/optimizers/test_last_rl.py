@@ -15,6 +15,26 @@ def test_alpha_inf_validator():
     LastRLConfig(fairness_alpha=float("inf"))
 
 
+def test_epsilon_bounds_validator():
+    """epsilon_start and epsilon_end must each be in [0, 1]."""
+    from ai.optimizers.result import LastRLConfig
+
+    with pytest.raises(ValidationError):
+        LastRLConfig(epsilon_start=1.5)
+    with pytest.raises(ValidationError):
+        LastRLConfig(epsilon_end=-0.1)
+
+
+def test_epsilon_schedule_validator():
+    """epsilon_start must be >= epsilon_end (decay schedule, not inflation)."""
+    from ai.optimizers.result import LastRLConfig
+
+    with pytest.raises(ValidationError):
+        LastRLConfig(epsilon_start=0.05, epsilon_end=0.5)
+    # Equal is fine (constant schedule)
+    LastRLConfig(epsilon_start=0.5, epsilon_end=0.5)
+
+
 def test_config_defaults():
     """LastRLConfig() has the documented defaults."""
     from ai.optimizers.result import LastRLConfig
