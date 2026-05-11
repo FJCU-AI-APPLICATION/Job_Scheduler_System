@@ -78,6 +78,9 @@ class _ModelBundle:
     h_min: cp_model.IntVar
 
 
+# Consumed by ai.agents.warm_start.enumerate_cpsat_optima (#17): treats _build_model,
+# _make_solver, _solve_stage, and _ModelBundle.x as a semi-public contract for
+# rebuilding the model with custom constraints during optimum enumeration.
 def _build_model(sp: SchedulingProblem) -> _ModelBundle:
     """Build the shared CP-SAT model from a SchedulingProblem.
 

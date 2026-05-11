@@ -27,7 +27,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 from ai.agents.environment import SchedulingEnv
 from ai.domain.problem import SchedulingProblem
-from ai.optimizers.cpsat import _build_model, _make_solver
+from ai.optimizers.cpsat import _build_model, _make_solver, _solve_stage
 from ai.optimizers.result import CPSATConfig
 
 
@@ -77,26 +77,21 @@ def enumerate_cpsat_optima(
     n_solutions distinct optimum-achieving schedules via
     enumerate_all_solutions=True and a solution callback.
 
-    Reuses _build_model / _make_solver from optimizers/cpsat.py.
+    Stage 1 and stage 2 solves go through cpsat._solve_stage, so the same
+    CPSATInfeasibleError / CPSATTimeoutError taxonomy is raised on failure.
+
+    Reuses _build_model / _make_solver / _solve_stage from optimizers/cpsat.py.
     """
     # Stage 1: minimize b2b
     bundle_1 = _build_model(sp)
     bundle_1.model.Minimize(bundle_1.b2b_total)
-    solver = _make_solver(config)
-    status = solver.Solve(bundle_1.model)
-    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        raise RuntimeError(f"CP-SAT stage 1 (b2b) returned {status}")
-    b2b_star = int(solver.ObjectiveValue())
+    _, _, b2b_star, _ = _solve_stage(bundle_1, config, stage="b2b")
 
     # Stage 2: minimize fairness_gap under b2b ≤ b2b★
     bundle_2 = _build_model(sp)
     bundle_2.model.Add(bundle_2.b2b_total <= b2b_star)
     bundle_2.model.Minimize(bundle_2.fairness_gap)
-    solver = _make_solver(config)
-    status = solver.Solve(bundle_2.model)
-    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        raise RuntimeError(f"CP-SAT stage 2 (fairness) returned {status}")
-    gap_star = int(solver.ObjectiveValue())
+    _, _, gap_star, _ = _solve_stage(bundle_2, config, stage="fairness")
 
     # Enumeration: rebuild model with both pinned, no objective
     bundle_e = _build_model(sp)
@@ -137,10 +132,12 @@ def cpsat_schedules_to_transitions(
             next_obs_list.append(next_obs)
             done_list.append(terminated)
             obs = next_obs
+    infos = np.empty(len(obs_list), dtype=object)
+    infos.fill({})
     return Transitions(
         obs=np.array(obs_list, dtype=np.float32),
         acts=np.array(act_list, dtype=np.int64),
-        infos=np.array([{} for _ in obs_list]),
+        infos=infos,
         next_obs=np.array(next_obs_list, dtype=np.float32),
         dones=np.array(done_list, dtype=bool),
     )
