@@ -25,7 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--acceptance", choices=("vns", "sa"), default="vns")
     parser.add_argument("--k-max", type=int, default=3)
     parser.add_argument("--max-iterations", type=int, default=100)
-    parser.add_argument("--stagnation-limit", type=int, default=20)
+    parser.add_argument("--stagnation-limit", type=int, default=50)
     parser.add_argument("--time-budget-s", type=float, default=300.0)
     parser.add_argument("--inner-ip-time-budget-s", type=float, default=5.0)
     parser.add_argument("--inner-ip-workers", type=int, default=4)

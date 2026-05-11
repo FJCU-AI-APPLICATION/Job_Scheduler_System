@@ -36,7 +36,7 @@ def test_config_defaults():
     assert c.acceptance == "vns"
     assert c.k_max == 3
     assert c.max_iterations == 100
-    assert c.stagnation_limit == 20
+    assert c.stagnation_limit == 50
     assert c.time_budget_s == 300.0
     assert c.inner_ip_time_budget_s == 5.0
     assert c.inner_ip_workers == 4
