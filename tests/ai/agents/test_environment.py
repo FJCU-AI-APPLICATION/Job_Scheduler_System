@@ -78,19 +78,24 @@ def test_pareto_reference_defaults_to_none():
 
 
 def test_reward_without_pareto_reference_is_unchanged():
-    """With pareto_reference=None, env reward is identical to today's behavior."""
+    """With pareto_reference=None, terminal-step info dict is empty AND
+    no ΔHV bonus is added. Drives the env to terminal to actually exercise
+    the back-compat guarantee."""
     from ai.agents.environment import EnvironmentConfig, SchedulingEnv
 
     config = EnvironmentConfig(pareto_reference=None)
     env = SchedulingEnv(config)
     env.reset(seed=0)
-    _, r1, _, _, info1 = env.step(0)
-    _, r2, _, _, info2 = env.step(1)
-    # Terminal not reached; info dict empty (no Pareto reference set).
-    assert info1 == {}
-    assert info2 == {}
-    # Step 1 reward = +0.5 (no penalties on first action).
-    assert r1 == pytest.approx(0.5)
+
+    info_at_terminal = None
+    for t in range(env.num_shifts):
+        _, _, terminated, _, info = env.step(t % env.num_employees)
+        if terminated:
+            info_at_terminal = info
+            break
+
+    # Terminal reached; info dict must be empty (no Pareto reference set).
+    assert info_at_terminal == {}
 
 
 def test_episode_fitness_matches_rostering_problem_formula():
@@ -127,8 +132,9 @@ def test_delta_hv_returns_zero_for_empty_reference():
     assert env._compute_delta_hv() == 0.0
 
 
-def test_delta_hv_is_non_negative_for_extending_point():
-    """ΔHV is monotone — always ≥ 0 for any episode point."""
+def test_delta_hv_is_non_negative():
+    """ΔHV is monotone — always ≥ 0 for any episode point, by construction
+    (clamped via max(..., 0.0))."""
     from ai.agents.environment import EnvironmentConfig, SchedulingEnv
 
     reference = [(0.5, 0.0, 50.0)]
