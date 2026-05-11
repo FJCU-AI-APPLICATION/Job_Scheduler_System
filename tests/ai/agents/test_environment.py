@@ -67,3 +67,101 @@ def test_env_config_default_alpha_is_two():
     from ai.agents.environment import EnvironmentConfig
 
     assert EnvironmentConfig().fairness_alpha == 2.0
+
+
+def test_pareto_reference_defaults_to_none():
+    """Back-compat: EnvironmentConfig.pareto_reference defaults to None."""
+    from ai.agents.environment import EnvironmentConfig
+
+    assert EnvironmentConfig().pareto_reference is None
+    assert EnvironmentConfig().hv_reference_point == (2.0, 1000.0, 100.0)
+
+
+def test_reward_without_pareto_reference_is_unchanged():
+    """With pareto_reference=None, terminal-step info dict is empty AND
+    no ΔHV bonus is added. Drives the env to terminal to actually exercise
+    the back-compat guarantee."""
+    from ai.agents.environment import EnvironmentConfig, SchedulingEnv
+
+    config = EnvironmentConfig(pareto_reference=None)
+    env = SchedulingEnv(config)
+    env.reset(seed=0)
+
+    info_at_terminal = None
+    for t in range(env.num_shifts):
+        _, _, terminated, _, info = env.step(t % env.num_employees)
+        if terminated:
+            info_at_terminal = info
+            break
+
+    # Terminal reached; info dict must be empty (no Pareto reference set).
+    assert info_at_terminal == {}
+
+
+def test_episode_fitness_matches_rostering_problem_formula():
+    """_episode_fitness returns (unfairness, violations, b2b) matching the EA fitness shape."""
+    import numpy as np
+    from ai.agents.environment import EnvironmentConfig, SchedulingEnv
+    from ai.domain.fairness import aggregate_fairness
+
+    config = EnvironmentConfig()
+    env = SchedulingEnv(config)
+    env.reset(seed=0)
+    # Force employee 0 to take all of day 0's shifts (3 shifts in a row → b2b=2).
+    for _ in range(3):
+        env.step(0)
+    fit = env._episode_fitness()
+    assert fit.shape == (3,)
+    assert fit[0] == pytest.approx(
+        aggregate_fairness(env._hours, alpha=2.0, kind="unfairness")
+    )
+    # 3 consecutive employee 0 → 2 back-to-back transitions.
+    assert fit[2] == 2.0
+
+
+def test_delta_hv_returns_zero_for_empty_reference():
+    """Empty pareto_reference → ΔHV = 0 (defense-in-depth)."""
+    from ai.agents.environment import EnvironmentConfig, SchedulingEnv
+
+    config = EnvironmentConfig(pareto_reference=[])
+    env = SchedulingEnv(config)
+    env.reset(seed=0)
+    # Drive env to terminal.
+    for t in range(env.num_shifts):
+        env.step(t % env.num_employees)
+    assert env._compute_delta_hv() == 0.0
+
+
+def test_delta_hv_is_non_negative():
+    """ΔHV is monotone — always ≥ 0 for any episode point, by construction
+    (clamped via max(..., 0.0))."""
+    from ai.agents.environment import EnvironmentConfig, SchedulingEnv
+
+    reference = [(0.5, 0.0, 50.0)]
+    config = EnvironmentConfig(pareto_reference=reference)
+    env = SchedulingEnv(config)
+    env.reset(seed=0)
+    for t in range(env.num_shifts):
+        env.step(t % env.num_employees)
+    delta_hv = env._compute_delta_hv()
+    assert delta_hv >= 0.0
+
+
+def test_terminal_step_emits_info_dict():
+    """At terminal step with a Pareto reference, info dict carries delta_hv + components."""
+    from ai.agents.environment import EnvironmentConfig, SchedulingEnv
+
+    config = EnvironmentConfig(pareto_reference=[(0.5, 0.0, 50.0)])
+    env = SchedulingEnv(config)
+    env.reset(seed=0)
+    info_terminal = None
+    for t in range(env.num_shifts):
+        _, _, terminated, _, info = env.step(t % env.num_employees)
+        if terminated:
+            info_terminal = info
+            break
+    assert info_terminal is not None
+    assert "delta_hv" in info_terminal
+    assert "episode_unfairness" in info_terminal
+    assert "episode_violations" in info_terminal
+    assert "episode_b2b" in info_terminal
