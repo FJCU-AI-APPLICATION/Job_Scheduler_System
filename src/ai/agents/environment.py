@@ -18,6 +18,8 @@ class EnvironmentConfig(BaseModel):
     pt_max_hours: int = 40
     unavailability: set[tuple[int, int]] = set()
     fairness_alpha: float = 2.0
+    pareto_reference: list[tuple[float, float, float]] | None = None
+    hv_reference_point: tuple[float, float, float] = (2.0, 1000.0, 100.0)
 
 
 class SchedulingEnv(gym.Env):
@@ -74,6 +76,7 @@ class SchedulingEnv(gym.Env):
         self._shift_index: int = 0
         self._hours: np.ndarray = np.zeros(self.num_employees, dtype=np.float32)
         self._previous_employee: int | None = None
+        self._schedule: list[int] = []
 
     def reset(
         self,
@@ -85,6 +88,7 @@ class SchedulingEnv(gym.Env):
         self._shift_index = 0
         self._hours = np.zeros(self.num_employees, dtype=np.float32)
         self._previous_employee = None
+        self._schedule = []
         return self._get_observation(), {}
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
@@ -121,11 +125,24 @@ class SchedulingEnv(gym.Env):
 
         self._shift_index += 1
         self._previous_employee = action
+        self._schedule.append(int(action))
 
         terminated = self._shift_index >= self.num_shifts
         truncated = False
 
-        return self._get_observation(), reward, terminated, truncated, {}
+        info: dict = {}
+        if terminated and self.config.pareto_reference is not None:
+            delta_hv = self._compute_delta_hv()
+            reward += delta_hv
+            fit = self._episode_fitness()
+            info = {
+                "delta_hv": delta_hv,
+                "episode_unfairness": float(fit[0]),
+                "episode_violations": float(fit[1]),
+                "episode_b2b": float(fit[2]),
+            }
+
+        return self._get_observation(), reward, terminated, truncated, info
 
     def action_masks(self) -> np.ndarray:
         """Boolean mask of valid actions for the current state.
@@ -146,6 +163,43 @@ class SchedulingEnv(gym.Env):
                 mask[:] = True
 
         return mask
+
+    def _compute_delta_hv(self) -> float:
+        """Marginal HV contribution of the episode's final point against the
+        reference front. Returns 0.0 if pareto_reference is empty/None."""
+        if not self.config.pareto_reference:
+            return 0.0
+        from pymoo.indicators.hv import HV
+
+        point = self._episode_fitness()
+        ref = np.array(self.config.hv_reference_point, dtype=np.float64)
+        front = np.array(self.config.pareto_reference, dtype=np.float64)
+        hv = HV(ref_point=ref)
+        return max(
+            float(hv(np.vstack([front, point]))) - float(hv(front)),
+            0.0,
+        )
+
+    def _episode_fitness(self) -> np.ndarray:
+        """3-tuple (unfairness, violations, b2b) matching RosteringProblem._evaluate_batch."""
+        unfairness = aggregate_fairness(
+            self._hours, alpha=self.config.fairness_alpha, kind="unfairness"
+        )
+        exceed = float(
+            np.clip(self._hours - self.max_hours_for_employee, 0.0, None).sum()
+        )
+        unavail_hits = sum(
+            1
+            for t, emp in enumerate(self._schedule)
+            if (t // self.config.shifts_per_day, emp) in self.unavailability
+        )
+        violations = exceed + 10.0 * unavail_hits
+        b2b = sum(
+            1
+            for i in range(1, len(self._schedule))
+            if self._schedule[i] == self._schedule[i - 1]
+        )
+        return np.array([unfairness, violations, float(b2b)], dtype=np.float64)
 
     def _get_observation(self) -> np.ndarray:
         obs = np.zeros(self._obs_dim, dtype=np.float32)
