@@ -54,6 +54,16 @@ def main(argv: list[str] | None = None) -> int:
         if a not in available:
             parser.error(f"Unknown algorithm '{a}'. Available: {available}")
 
+    # CPSAT is deterministic (single optimum per problem) and its α is
+    # pinned to inf. The benchmark harness aggregates across seeds for stochastic
+    # optimizers; CPSAT doesn't fit that contract.
+    if "cpsat" in algorithms and args.fairness_alpha != float("inf"):
+        parser.error(
+            f"--fairness-alpha={args.fairness_alpha} is incompatible with CPSAT "
+            "(CPSAT only supports alpha=inf). Either drop cpsat from --algorithm, "
+            "or pass --fairness-alpha inf to run all algorithms at egalitarian α."
+        )
+
     instances = list_instances(args.track)
     seeds = list(range(args.seeds))
 
