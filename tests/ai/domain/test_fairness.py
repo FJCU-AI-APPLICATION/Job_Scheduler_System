@@ -132,10 +132,11 @@ def test_aggregate_unfairness_bad_kind_raises():
 
 
 def test_empty_input_returns_zero_welfare():
-    """n=0 → welfare = 0 for all α (no values to aggregate)."""
+    """n=0 → welfare = 0 for α∈{0,1,∞}; α=2 returns 1.0 for bit-identical
+    Jain regression."""
     from ai.domain.fairness import alpha_fairness
 
-    assert alpha_fairness([], alpha=2.0) == pytest.approx(0.0)
+    assert alpha_fairness([], alpha=2.0) == pytest.approx(1.0)
     assert alpha_fairness([], alpha=0.0) == pytest.approx(0.0)
     assert alpha_fairness([], alpha=1.0) == pytest.approx(0.0)
     assert alpha_fairness([], alpha=float("inf")) == pytest.approx(0.0)
@@ -225,6 +226,7 @@ def test_alpha_two_matches_legacy_jain_bit_identical():
     from ai.domain.problem import jain_fairness_index
 
     hours_examples = [
+        [],                                       # empty — degenerate Jain (1.0)
         [160, 160, 160, 160, 40, 40, 40],         # default canonical FT/PT mix
         [100, 50, 200, 75, 125, 30, 90],          # uneven
         [120, 120, 120, 120, 120, 120, 120],      # uniform

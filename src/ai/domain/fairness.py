@@ -41,13 +41,17 @@ def alpha_fairness(values, alpha: float) -> float:
     α=∞  → min(x_i)
     else → (1/(1−α)) · Σ max(x_i, ε)^(1−α)
 
-    Conventions: empty input returns 0; all-zero values at α=2 return 1
-    (degenerate "perfect fairness"); zeros at α≥1 are clamped via EPSILON.
+    Conventions: empty input returns 0 (or 1.0 at α=2 for Jain regression);
+    all-zero values at α=2 return 1 (degenerate "perfect fairness"); zeros at
+    α≥1 are clamped via EPSILON.
     """
     t = _as_tensor(values)
     n = t.shape[0]
     if n == 0:
-        return 0.0
+        # α=2 (Jain) special-cases empty input to 1.0 for bit-identical
+        # regression with the legacy jain_fairness_index. Other α return 0.0
+        # (no welfare to aggregate).
+        return 1.0 if alpha == 2.0 else 0.0
 
     if alpha == float("inf"):
         return float(t.min())
@@ -135,7 +139,10 @@ def alpha_fairness_batch(rows: torch.Tensor, alpha: float) -> torch.Tensor:
     rows = rows.to(torch.float64)
     n = rows.shape[1]
     if n == 0:
-        return torch.zeros(rows.shape[0], dtype=torch.float64, device=rows.device)
+        # Same convention as the scalar: α=2 returns ones (Jain degenerate);
+        # other α returns zeros.
+        fill = 1.0 if alpha == 2.0 else 0.0
+        return torch.full((rows.shape[0],), fill, dtype=torch.float64, device=rows.device)
 
     if alpha == float("inf"):
         return rows.min(dim=1).values
