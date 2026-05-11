@@ -254,3 +254,71 @@ def build_llh_library(
         partial_with_name("swap_block_ip",  swap_shift_block_ip,    sp=sp, time_budget_s=ip_time_budget_s, workers=ip_workers),
         partial_with_name("swap_emp_ip",    swap_employee_ip,       sp=sp, time_budget_s=ip_time_budget_s, workers=ip_workers),
     ]
+
+
+# === Paper LLH library (6 LLHs, no IP) — sanity-check use only ===
+
+
+def build_paper_llh_library(instance) -> list[LowLevelHeuristic]:
+    """6 LLHs matching the LAST-RL paper's set on BCV-format instances.
+
+    Differs from build_llh_library (our SchedulingProblem) in three ways:
+      1. No IP-backed operators — paper is pure mutation
+      2. `repair_unavailability` is replaced by `repair_coverage` (paper-specific)
+      3. Operators use BCV's flat `num_days * num_shift_types` schedule shape
+
+    The 6 LLHs are: 1-move, 2-swap, 3-swap, day-move, sequence-swap,
+    repair-coverage.
+    """
+    nE = instance.num_employees
+
+    def _bcv_single_move(sched, rng):
+        return single_move(sched, rng, num_employees=nE)
+
+    def _bcv_k_swap_2(sched, rng):
+        return k_swap(sched, rng, k=2)
+
+    def _bcv_k_swap_3(sched, rng):
+        return k_swap(sched, rng, k=3)
+
+    def _bcv_day_move(sched, rng):
+        """Move a random day's worth of shifts to another day's slot."""
+        new = list(sched)
+        d1, d2 = rng.choice(instance.num_days, size=2, replace=False)
+        s = instance.num_shift_types
+        for k in range(s):
+            new[int(d1) * s + k] = new[int(d2) * s + k]
+        return new
+
+    def _bcv_sequence_swap(sched, rng):
+        """Pick a random consecutive 2-shift block; swap the assignments."""
+        new = list(sched)
+        if len(new) < 2:
+            return new
+        i = int(rng.integers(0, len(new) - 1))
+        new[i], new[i + 1] = new[i + 1], new[i]
+        return new
+
+    def _bcv_repair_coverage(sched, rng):
+        """For each (day, shift_type), if assigned employee is on days_off,
+        reassign to a uniformly-random available employee."""
+        new = list(sched)
+        for t in range(len(new)):
+            day = t // instance.num_shift_types
+            if day in instance.days_off.get(new[t], set()):
+                avail = [
+                    e for e in range(nE)
+                    if day not in instance.days_off.get(e, set())
+                ]
+                if avail:
+                    new[t] = int(rng.choice(avail))
+        return new
+
+    return [
+        partial_with_name("paper_1_move",        _bcv_single_move),
+        partial_with_name("paper_2_swap",        _bcv_k_swap_2),
+        partial_with_name("paper_3_swap",        _bcv_k_swap_3),
+        partial_with_name("paper_day_move",      _bcv_day_move),
+        partial_with_name("paper_seq_swap",      _bcv_sequence_swap),
+        partial_with_name("paper_repair_cov",    _bcv_repair_coverage),
+    ]

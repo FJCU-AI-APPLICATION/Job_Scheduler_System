@@ -297,3 +297,87 @@ def test_runs_via_create(tiny_problem):
 
     optimizer = Optimizer.create("last_rl", tiny_problem)
     assert isinstance(optimizer, LastRLOptimizer)
+
+
+def test_save_load_policy_round_trip(tmp_path, tiny_problem):
+    """Save a trained policy; load into a fresh one; same Q-values."""
+    from ai.optimizers.last_rl import (
+        SARSALambdaPolicy, save_policy, load_policy, train,
+    )
+    from ai.optimizers.last_rl_problem import RosteringLastRLProblem
+    from ai.optimizers.result import LastRLConfig
+
+    config = LastRLConfig(
+        num_episodes=2, episode_length=5, ip_time_budget_s=0.5, ip_workers=1, seed=0,
+    )
+    problem = RosteringLastRLProblem(tiny_problem, config)
+    policy_a = SARSALambdaPolicy(iht_size=256, num_tilings=8, num_actions=problem.num_actions)
+    rng = np.random.default_rng(0)
+    train(problem, policy_a, config, rng)
+
+    ckpt = tmp_path / "policy.npz"
+    save_policy(policy_a, ckpt, config_snapshot_json='{"acceptance": "test"}')
+
+    policy_b = load_policy(ckpt, num_actions=problem.num_actions)
+    feats = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+    assert np.allclose(policy_a.q_all(feats), policy_b.q_all(feats))
+
+
+def test_inference_returns_last_rl_result(tmp_path, tiny_problem):
+    """Train, checkpoint, load via LastRLOptimizer.run, check result shape."""
+    from ai.optimizers.last_rl import (
+        LastRLOptimizer, SARSALambdaPolicy, save_policy, train,
+    )
+    from ai.optimizers.last_rl_problem import RosteringLastRLProblem
+    from ai.optimizers.result import LastRLConfig, LastRLResult
+
+    train_config = LastRLConfig(
+        num_episodes=2, episode_length=10, ip_time_budget_s=0.5, ip_workers=1, seed=42,
+    )
+    problem = RosteringLastRLProblem(tiny_problem, train_config)
+    policy = SARSALambdaPolicy(
+        iht_size=256, num_tilings=8, num_actions=problem.num_actions,
+    )
+    train(problem, policy, train_config, np.random.default_rng(42))
+
+    ckpt = tmp_path / "policy.npz"
+    save_policy(policy, ckpt, config_snapshot_json='{"seed": 42}')
+
+    inf_config = LastRLConfig(
+        episode_length=10, ip_time_budget_s=0.5, ip_workers=1,
+        checkpoint_path=str(ckpt), seed=42,
+    )
+    result = LastRLOptimizer(tiny_problem).run(inf_config)
+    assert isinstance(result, LastRLResult)
+    assert len(result.best_schedule) == tiny_problem.num_shifts
+    assert len(result.best_fitness) == 3
+    assert result.checkpoint_used == str(ckpt)
+
+
+def test_inference_seed_reproducible(tmp_path, tiny_problem):
+    """Same checkpoint + same seed → same inference result."""
+    from ai.optimizers.last_rl import (
+        LastRLOptimizer, SARSALambdaPolicy, save_policy, train,
+    )
+    from ai.optimizers.last_rl_problem import RosteringLastRLProblem
+    from ai.optimizers.result import LastRLConfig
+
+    train_config = LastRLConfig(
+        num_episodes=2, episode_length=5, ip_time_budget_s=0.5, ip_workers=1, seed=7,
+    )
+    problem = RosteringLastRLProblem(tiny_problem, train_config)
+    policy = SARSALambdaPolicy(
+        iht_size=256, num_tilings=8, num_actions=problem.num_actions,
+    )
+    train(problem, policy, train_config, np.random.default_rng(7))
+    ckpt = tmp_path / "policy.npz"
+    save_policy(policy, ckpt, config_snapshot_json="{}")
+
+    inf_config = LastRLConfig(
+        episode_length=10, ip_time_budget_s=0.5, ip_workers=1,
+        checkpoint_path=str(ckpt), seed=99,
+    )
+    a = LastRLOptimizer(tiny_problem).run(inf_config)
+    b = LastRLOptimizer(tiny_problem).run(inf_config)
+    assert a.best_schedule == b.best_schedule
+    assert a.best_cost == b.best_cost

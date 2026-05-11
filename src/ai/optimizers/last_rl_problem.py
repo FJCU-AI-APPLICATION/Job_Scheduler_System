@@ -141,3 +141,74 @@ class RosteringLastRLProblem:
             fair_gap / max(total_hours, 1),
             violations / max(sp.num_shifts * 10, 1),
         ], dtype=np.float64)
+
+
+# === Concrete: PaperBenchmarkProblem (sanity-check only) ===
+
+
+class PaperBenchmarkProblem:
+    """LastRLProblem wrapping a PaperInstance for the sanity-check tests.
+
+    Used by `python -m ai.training.last_rl train-paper` and the slow benchmark
+    test that asserts within-10pct reproduction. Not used in our normal
+    inference path.
+    """
+
+    num_actions: int = 6
+
+    def __init__(self, instance):
+        self._instance = instance
+        self.name = f"paper:{instance.name}"
+        from ai.optimizers.llh import build_paper_llh_library
+        self._llh_lib = build_paper_llh_library(instance)
+
+    def initial_solution(self, rng: np.random.Generator) -> list[int]:
+        """Random feasible: sample uniformly over employees per shift,
+        respecting days_off. Standard "random feasible" paper init."""
+        n = self._instance.num_days * self._instance.num_shift_types
+        sched: list[int] = []
+        for t in range(n):
+            day = t // self._instance.num_shift_types
+            available = [
+                e for e in range(self._instance.num_employees)
+                if day not in self._instance.days_off.get(e, set())
+            ]
+            if not available:
+                available = list(range(self._instance.num_employees))
+            sched.append(int(rng.choice(available)))
+        return sched
+
+    def cost(self, solution: list[int]) -> float:
+        from ai.data.last_rl_benchmark import paper_cost
+        return paper_cost(self._instance, solution)
+
+    def llh_library(self) -> list[LowLevelHeuristic]:
+        return self._llh_lib
+
+    def features(
+        self, solution: list[int], history: SearchHistory
+    ) -> np.ndarray:
+        """Paper §3.2 feature set: history features 0-6 (same as ours) plus
+        paper-specific instance-state features 7-9."""
+        scale = max(history.initial_cost, 1.0)
+        last_llh_norm = (
+            (history.last_llh_idx + 1) / max(self.num_actions, 1)
+            if history.last_llh_idx >= 0 else 0.0
+        )
+        mean_last_5 = (
+            float(np.mean(history.last_5_rewards))
+            if history.last_5_rewards else 0.0
+        )
+        f7 = float(np.clip(history.current_cost / scale, 0.0, 2.0))
+        f8 = history.stagnation_count / max(history.max_iterations, 1)
+        f9 = float(np.clip(history.last_reward / scale, -1.0, 1.0))
+        return np.array([
+            history.iteration / max(history.max_iterations, 1),
+            history.current_cost / scale,
+            (history.current_cost - history.best_cost) / scale,
+            history.stagnation_count / max(history.max_iterations, 1),
+            float(np.clip(history.last_reward / scale, -1.0, 1.0)),
+            last_llh_norm,
+            float(np.clip(mean_last_5 / scale, -1.0, 1.0)),
+            f7, f8, f9,
+        ], dtype=np.float64)

@@ -248,6 +248,102 @@ def train(
     return episodes
 
 
+# === Checkpoint I/O ===
+
+
+import json
+import pickle
+from pathlib import Path
+
+
+def save_policy(
+    policy: SARSALambdaPolicy,
+    path: str | Path,
+    *,
+    config_snapshot_json: str,
+) -> None:
+    """Serialize a SARSA(λ) policy to .npz.
+
+    Stores: weights (the Q-table), iht_dict (pickled hash table for
+    reproducible inference), config_snapshot (JSON string).
+    """
+    np.savez(
+        str(path),
+        weights=policy.w,
+        iht_dict=np.array([pickle.dumps(policy.iht.dictionary)], dtype=object),
+        config_snapshot=np.array([config_snapshot_json], dtype=object),
+    )
+
+
+def load_policy(
+    path: str | Path,
+    *,
+    num_actions: int,
+) -> SARSALambdaPolicy:
+    """Load a SARSA(λ) policy from a .npz produced by save_policy()."""
+    data = np.load(str(path), allow_pickle=True)
+    weights = data["weights"]
+    iht_dict = pickle.loads(data["iht_dict"][0])
+    iht_size, weights_actions = weights.shape
+    if weights_actions != num_actions:
+        raise ValueError(
+            f"Checkpoint has {weights_actions} actions but caller expects "
+            f"{num_actions}; mismatched LLH library."
+        )
+    policy = SARSALambdaPolicy(
+        iht_size=iht_size, num_tilings=8, num_actions=num_actions,
+    )
+    policy.w = weights.astype(np.float64)
+    policy.iht.dictionary = iht_dict
+    return policy
+
+
+def _episode_to_last_rl_result(
+    ep: EpisodeResult,
+    problem,
+    sp,
+    config: LastRLConfig,
+) -> LastRLResult:
+    """Convert one EpisodeResult into the full LastRLResult schema."""
+    from ai.domain.fairness import aggregate_fairness, alpha_fairness
+
+    sched = ep.best_sched
+    hours = [0] * sp.num_employees
+    for t, emp in enumerate(sched):
+        hours[emp] += sp.shift_lengths[t % sp.shifts_per_day]
+
+    b2b = sum(1 for i in range(len(sched) - 1) if sched[i] == sched[i + 1])
+    fair_gap = max(hours) - min(hours) if hours else 0
+    overrun = sum(max(0, hours[e] - sp.max_hours[e]) for e in range(sp.num_employees))
+    unavail_hits = sum(
+        1 for t, emp in enumerate(sched)
+        if (t // sp.shifts_per_day, emp) in sp.unavailability
+    )
+    violations = overrun + 10 * unavail_hits
+
+    unfairness = aggregate_fairness(hours, alpha=float("inf"), kind="unfairness")
+    fairness_metric = alpha_fairness(hours, alpha=float("inf"))
+    jain = alpha_fairness(hours, alpha=2.0)
+
+    return LastRLResult(
+        best_schedule=sched,
+        best_fitness=(float(unfairness), float(violations), float(b2b)),
+        best_cost=ep.best_cost,
+        b2b_count=b2b,
+        fairness_gap=fair_gap,
+        violations=violations,
+        fairness_metric=float(fairness_metric),
+        fairness_alpha=float("inf"),
+        jain_index=jain,
+        step_history=ep.step_history,
+        neighborhood_usage=ep.neighborhood_usage,
+        total_steps=len(ep.step_history),
+        total_wall_clock_s=ep.wall_clock_s,
+        initial_cost=ep.initial_cost,
+        checkpoint_used=str(config.checkpoint_path),
+    )
+
+
 class LastRLOptimizer(Optimizer):
     """LAST-RL hyper-heuristic (inference-time).
 
@@ -270,4 +366,13 @@ class LastRLOptimizer(Optimizer):
                 "last_rl requires config.checkpoint_path. "
                 "Train via `python -m ai.training.last_rl train-ours` first."
             )
-        raise NotImplementedError("Checkpoint loading + inference: Task 10 (Phase 4).")
+
+        from ai.optimizers.last_rl_problem import RosteringLastRLProblem
+        problem = RosteringLastRLProblem(self._sp, config)
+        policy = load_policy(config.checkpoint_path, num_actions=problem.num_actions)
+        rng = np.random.default_rng(config.seed)
+        ep = run_episode(
+            problem, policy, config,
+            epsilon=0.0, rng=rng, learning=False,
+        )
+        return _episode_to_last_rl_result(ep, problem, self._sp, config)
