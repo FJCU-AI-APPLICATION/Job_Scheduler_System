@@ -439,3 +439,41 @@ def test_seed_reproducibility(tiny_problem):
     for sa_step, sb_step in zip(a.step_history, b.step_history):
         assert sa_step.neighborhood == sb_step.neighborhood
         assert sa_step.size_k == sb_step.size_k
+
+
+def test_inference_service_dispatch():
+    """run_optimizer_inference('matheuristic', request, ...) returns a response."""
+    from ai.domain.schemas import (
+        EmployeeInfo,
+        SchedulingRequest,
+        ShiftInfo,
+        UnavailabilityInfo,
+    )
+    from ai.services.optimizer_inference import run_optimizer_inference
+
+    request = SchedulingRequest(
+        employees=[
+            EmployeeInfo(id=1, employee_type="FT", max_hours=40),
+            EmployeeInfo(id=2, employee_type="FT", max_hours=40),
+            EmployeeInfo(id=3, employee_type="PT", max_hours=20),
+        ],
+        shifts=[
+            ShiftInfo(start_time="08:00", end_time="16:00", length_hours=8),
+            ShiftInfo(start_time="16:00", end_time="00:00", length_hours=8),
+        ],
+        days=5,
+        unavailability=[UnavailabilityInfo(employee_id=1, day=0)],
+    )
+
+    response = run_optimizer_inference(
+        "matheuristic",
+        request,
+        config_overrides={
+            "max_iterations": 3,
+            "time_budget_s": 30.0,
+            "inner_ip_time_budget_s": 2.0,
+            "seed": 42,
+        },
+    )
+    assert len(response.schedule) == 5 * 2  # 5 days × 2 shifts
+    assert response.metrics is not None
