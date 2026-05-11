@@ -1,6 +1,6 @@
 """Schedule quality metrics. Each scorer is independent; compute_metrics composes them."""
 
-from ai.domain.problem import jain_fairness_index
+from ai.domain.fairness import alpha_fairness
 from ai.domain.schemas import (
     ConstraintViolations,
     ScheduleMetrics,
@@ -9,20 +9,22 @@ from ai.domain.schemas import (
 )
 
 
-def compute_fairness(hours_by_employee: dict[int, int]) -> tuple[float, float]:
+def compute_fairness(
+    hours_by_employee: dict[int, int], alpha: float = 2.0
+) -> tuple[float, float]:
     """Compute fairness scores from per-employee hour totals.
 
     Returns:
-        (fairness_score, jain_index) where:
-        - fairness_score: 1 - (max-min)/max, range [0, 1]
-        - jain_index: Jain's fairness index, range [1/n, 1]
+        (fairness_score, fairness_metric) where:
+        - fairness_score: 1 - (max-min)/max, range [0, 1] (α-agnostic, easy to read)
+        - fairness_metric: alpha_fairness(values, α), the configurable welfare value
     """
     hours_values = list(hours_by_employee.values())
     max_h = max(hours_values) if hours_values else 0
     min_h = min(hours_values) if hours_values else 0
     fairness_score = 1.0 - (max_h - min_h) / max(max_h, 1)
-    jain_idx = jain_fairness_index(hours_values)
-    return fairness_score, jain_idx
+    fairness_metric = alpha_fairness(hours_values, alpha)
+    return fairness_score, fairness_metric
 
 
 def compute_violations(
@@ -98,12 +100,13 @@ def compute_metrics(
     assignments: list[ShiftAssignment],
     request: SchedulingRequest,
     hours_by_employee: dict[int, int],
+    fairness_alpha: float = 2.0,
 ) -> ScheduleMetrics:
     """Compute all schedule quality metrics."""
     shifts_per_day = len(request.shifts)
     total_shifts = request.days * shifts_per_day
 
-    fairness_score, jain_idx = compute_fairness(hours_by_employee)
+    fairness_score, fairness_metric = compute_fairness(hours_by_employee, alpha=fairness_alpha)
     violations = compute_violations(assignments, request, hours_by_employee)
     b2b_rate = compute_back_to_back_rate(assignments, shifts_per_day)
     coverage = compute_coverage_rate(assignments, total_shifts)
@@ -113,7 +116,8 @@ def compute_metrics(
 
     return ScheduleMetrics(
         fairness_score=round(fairness_score, 4),
-        jain_fairness_index=round(jain_idx, 4),
+        fairness_metric=round(fairness_metric, 4),
+        fairness_alpha=fairness_alpha,
         total_hours_by_employee=hours_by_employee,
         constraint_violations=violations,
         back_to_back_rate=round(b2b_rate, 4),

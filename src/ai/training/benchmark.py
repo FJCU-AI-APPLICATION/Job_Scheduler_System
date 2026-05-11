@@ -36,6 +36,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pop-size", type=int, default=100)
     parser.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     parser.add_argument(
+        "--fairness-alpha",
+        type=float,
+        default=2.0,
+        help="α-fairness parameter; passed to every algorithm's config.",
+    )
+    parser.add_argument(
         "--report",
         default=None,
         help="Path to write a JSON report. Prints to stdout when omitted.",
@@ -48,6 +54,16 @@ def main(argv: list[str] | None = None) -> int:
         if a not in available:
             parser.error(f"Unknown algorithm '{a}'. Available: {available}")
 
+    # CPSAT is deterministic (single optimum per problem) and its α is
+    # pinned to inf. The benchmark harness aggregates across seeds for stochastic
+    # optimizers; CPSAT doesn't fit that contract.
+    if "cpsat" in algorithms and args.fairness_alpha != float("inf"):
+        parser.error(
+            f"--fairness-alpha={args.fairness_alpha} is incompatible with CPSAT "
+            "(CPSAT only supports alpha=inf). Either drop cpsat from --algorithm, "
+            "or pass --fairness-alpha inf to run all algorithms at egalitarian α."
+        )
+
     instances = list_instances(args.track)
     seeds = list(range(args.seeds))
 
@@ -59,6 +75,7 @@ def main(argv: list[str] | None = None) -> int:
             "generations": args.generations,
             "pop_size": args.pop_size,
             "device": args.device,
+            "fairness_alpha": args.fairness_alpha,
         },
     )
 

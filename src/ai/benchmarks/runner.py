@@ -24,10 +24,12 @@ from ai.domain.schemas import (
 )
 from ai.optimizers.base import Optimizer
 
-REFERENCE_POINT: tuple[float, float, float] = (1.0, 1000.0, 100.0)
-"""Hypervolume reference point. Dominates all plausible (imbalance,
-violations, b2b) tuples on sprint-track instances; tighten if expanding
-to medium/long tracks.
+REFERENCE_POINT: tuple[float, float, float] = (2.0, 1000.0, 100.0)
+"""Hypervolume reference point. Dominates all plausible (unfairness,
+violations, b2b) tuples for any α in the supported range. The unfairness
+upper bound is 2.0 (not 1.0) as a safety margin for α=1 (Nash) where
+unfairness can exceed 1 in adversarial cases. Tighten if expanding to
+medium/long tracks.
 """
 
 # Wilcoxon signed-rank requires at least this many paired samples per
@@ -69,7 +71,7 @@ def run_benchmark(
                         seed=seed,
                         hypervolume=hv,
                         feasible_front_size=len(feasible_fits),
-                        best_imbalance=result.best_fitness[0],
+                        best_unfairness=result.best_fitness[0],
                         best_violations=result.best_fitness[1],
                         best_b2b=int(result.best_fitness[2]),
                         wall_clock_s=wall_clock,

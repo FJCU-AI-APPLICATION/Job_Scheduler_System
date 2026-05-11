@@ -24,6 +24,7 @@ def train_evolutionary(
     seed: int | None,
     device: str,
     output_dir: str,
+    fairness_alpha: float = 2.0,
 ) -> None:
     config_environment = EnvironmentConfig()
     problem = SchedulingProblem.from_config(config_environment)
@@ -37,10 +38,11 @@ def train_evolutionary(
         indpb=indpb,
         seed=seed,
         device=device,
+        fairness_alpha=fairness_alpha,
     )
 
     print(f"Running {algorithm}: {generations} generations, pop_size={pop_size}")
-    print(f"  cxpb={cxpb}, mutpb={mutpb}, indpb={indpb}, device={device}")
+    print(f"  cxpb={cxpb}, mutpb={mutpb}, indpb={indpb}, device={device}, fairness_alpha={fairness_alpha}")
     print(f"  Problem: {problem.num_employees} employees, {problem.num_shifts} shifts")
     print()
 
@@ -71,7 +73,7 @@ def train_evolutionary(
     hours = problem.compute_hours(result.best_schedule)
     jain = jain_fairness_index(hours)
     print(
-        f"\nBest: imbalance={result.best_fitness[0]:.4f}, "
+        f"\nBest: unfairness={result.best_fitness[0]:.4f}, "
         f"violations={result.best_fitness[1]:.1f}, b2b={result.best_fitness[2]:.0f}"
     )
     print(f"Jain's fairness index: {jain:.4f}")
@@ -105,6 +107,12 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--output-dir", type=str, default="checkpoints")
+    parser.add_argument(
+        "--fairness-alpha",
+        type=float,
+        default=2.0,
+        help="α-fairness parameter (0=utilitarian, 1=Nash, 2=Jain (default), large value≈max-min).",
+    )
     args = parser.parse_args()
     train_evolutionary(**vars(args))
 

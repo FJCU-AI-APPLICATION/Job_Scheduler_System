@@ -51,6 +51,7 @@ async def predict_evolutionary(
     generations: int = Query(100, ge=1, le=1000),
     pop_size: int = Query(50, ge=10, le=500),
     device: str = Query("cpu", pattern=r"^(cpu|cuda)$"),
+    fairness_alpha: float = Query(2.0, ge=0.0),
 ) -> SchedulingResponse:
     """Run an evolutionary multi-objective optimizer ('nsga2' | 'ccmo')."""
     return run_optimizer_inference(
@@ -60,6 +61,7 @@ async def predict_evolutionary(
             "generations": generations,
             "pop_size": pop_size,
             "device": device,
+            "fairness_alpha": fairness_alpha,
         },
     )
 

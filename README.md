@@ -42,7 +42,7 @@ The AI service ships three optimizers — two evolutionary and one exact — all
 |---|---|---|
 | `nsga2` | `ai.optimizers.nsga2.NSGAIIOptimizer` | EvoTorch `GeneticAlgorithm` with day-aligned crossover, uniform-int mutation, and a vectorized repair operator |
 | `ccmo` | `ai.optimizers.ccmo.CCMOOptimizer` | Constrained MOEA via Coevolution (Tian et al. 2021); Pop1 selects under Deb's constraint-domination, Pop2 explores unconstrained |
-| `cpsat` | `ai.optimizers.cpsat.CPSATOptimizer` | Exact baseline via OR-Tools CP-SAT; lexicographic two-stage (minimize back-to-back, then min-max hours spread); single optimal schedule per run |
+| `cpsat` | `ai.optimizers.cpsat.CPSATOptimizer` | Exact baseline via OR-Tools CP-SAT; lexicographic two-stage (minimize back-to-back, then minimize max-min fairness gap); single optimal schedule per run |
 
 Inference: `POST /predict/evolutionary/{algorithm}` — e.g. `/predict/evolutionary/nsga2`. The legacy `POST /predict/ga` is **deprecated** and forwards to `nsga2`. For exact ground-truth schedules at the default size, use `POST /predict/cpsat` (see the CP-SAT row above).
 

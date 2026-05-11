@@ -87,7 +87,7 @@ def _select_by_rank_and_crowding(
 class CCMOOptimizer(Optimizer):
     """Two coevolving populations:
       Pop1 — constraint-aware (Deb's constraint-domination principle)
-      Pop2 — unconstrained (NSGA-II on (imbalance, b2b) only)
+      Pop2 — unconstrained (NSGA-II on (unfairness, b2b) only)
     Both populations' offspring feed both selections each generation.
     """
 
@@ -104,7 +104,7 @@ class CCMOOptimizer(Optimizer):
         if config.seed is not None:
             torch.manual_seed(config.seed)
 
-        problem = RosteringProblem(self._sp, device=config.device)
+        problem = RosteringProblem(self._sp, alpha=config.fairness_alpha, device=config.device)
         operators = [
             DayAlignedCrossOver(
                 problem,
@@ -190,7 +190,7 @@ class CCMOOptimizer(Optimizer):
         return CCMOStepStatus(
             generation=gen,
             pop1_feasible_count=int(feas1.sum()),
-            pop1_best_imbalance=float(feas_e1[:, 0].min()) if feas_e1.numel() > 0 else float("nan"),
+            pop1_best_unfairness=float(feas_e1[:, 0].min()) if feas_e1.numel() > 0 else float("nan"),
             pop1_best_b2b=float(feas_e1[:, 2].min()) if feas_e1.numel() > 0 else float("nan"),
             pop1_pareto_size=int((ranks1 == 0).sum()) if ranks1.numel() > 0 else 0,
             pop2_pareto_size=int((ranks2 == 0).sum()),

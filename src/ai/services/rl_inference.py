@@ -65,7 +65,12 @@ def run_rl_inference(
 
     converter = ScheduleConverter(problem, request)
     assignments, hours_by_employee = converter.to_assignments(schedule_actions)
-    metrics = compute_metrics(assignments, request, hours_by_employee)
+    metrics = compute_metrics(
+        assignments,
+        request,
+        hours_by_employee,
+        fairness_alpha=config.fairness_alpha,
+    )
 
     return SchedulingResponse(schedule=assignments, metrics=metrics)
 

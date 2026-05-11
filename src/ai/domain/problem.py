@@ -20,22 +20,15 @@ def get_device() -> torch.device:
 
 
 def jain_fairness_index(values: torch.Tensor | np.ndarray | list) -> float:
-    """Compute Jain's fairness index: (sum(x))^2 / (n * sum(x^2)).
+    """Jain's fairness index. Thin wrapper around `alpha_fairness(values, α=2.0)`.
 
-    Returns 1.0 for perfect equality, 1/n for maximum inequality.
-    Returns 1.0 if all values are zero or empty.
+    Kept for backwards compatibility with call sites that historically imported
+    this name. Returns 1.0 for perfect equality, 1/n for maximum inequality,
+    1.0 for empty / all-zero input.
     """
-    if not isinstance(values, torch.Tensor):
-        t = torch.as_tensor(values, dtype=torch.float64, device=get_device())
-    else:
-        t = values
-    n = t.shape[0]
-    if n == 0:
-        return 1.0
-    sum_sq = t.pow(2).sum()
-    if sum_sq == 0:
-        return 1.0
-    return float(t.sum().pow(2) / (n * sum_sq))
+    from ai.domain.fairness import alpha_fairness
+
+    return alpha_fairness(values, alpha=2.0)
 
 
 class SchedulingProblem(BaseModel):

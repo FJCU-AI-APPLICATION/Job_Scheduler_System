@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EmployeeInfo(BaseModel):
@@ -40,8 +40,11 @@ class ConstraintViolations(BaseModel):
 
 
 class ScheduleMetrics(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     fairness_score: float
-    jain_fairness_index: float
+    fairness_metric: float = Field(alias="jain_fairness_index")
+    fairness_alpha: float = 2.0
     total_hours_by_employee: dict[int, int]
     constraint_violations: ConstraintViolations
     back_to_back_rate: float
@@ -57,7 +60,9 @@ class SchedulingResponse(BaseModel):
 # === NSGA-II (renamed from GA*) ===
 
 class NSGAIIFitnessResult(BaseModel):
-    imbalance: float
+    model_config = ConfigDict(populate_by_name=True)
+
+    unfairness: float = Field(alias="imbalance")
     constraint_violations: float
     back_to_back: float
 
@@ -77,6 +82,7 @@ class NSGAIIConfigSnapshot(BaseModel):
     elitist: bool
     seed: int | None
     device: str
+    fairness_alpha: float = 2.0
 
 
 class NSGAIITrainResult(BaseModel):
@@ -89,7 +95,9 @@ class NSGAIITrainResult(BaseModel):
 # === CCMO ===
 
 class CCMOFitnessResult(BaseModel):
-    imbalance: float
+    model_config = ConfigDict(populate_by_name=True)
+
+    unfairness: float = Field(alias="imbalance")
     constraint_violations: float
     back_to_back: float
 
@@ -108,6 +116,7 @@ class CCMOConfigSnapshot(BaseModel):
     tournament_size: int
     seed: int | None
     device: str
+    fairness_alpha: float = 2.0
 
 
 class CCMOTrainResult(BaseModel):
@@ -122,12 +131,14 @@ class CCMOTrainResult(BaseModel):
 # === Benchmark ===
 
 class BenchmarkRunRecord(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     instance: str
     algorithm: str
     seed: int
     hypervolume: float
     feasible_front_size: int
-    best_imbalance: float
+    best_unfairness: float = Field(alias="best_imbalance")
     best_violations: float
     best_b2b: int
     wall_clock_s: float
@@ -159,22 +170,27 @@ class CPSATConfigSnapshot(BaseModel):
     timeout_s_per_stage: float
     num_workers: int
     objective_priority: list[str]
+    fairness_alpha: float = float("inf")
     seed: int | None = None
 
 
 class CPSATStageResult(BaseModel):
     """Per-stage record for the CP-SAT lex pipeline."""
 
-    objective: str          # "b2b" | "spread"
+    objective: str          # "b2b" | "fairness"
     status: str             # "OPTIMAL" | "FEASIBLE"
     objective_value: int
     wall_clock_s: float
 
 
 class CPSATTrainResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     schedule: list[int]
     b2b_count: int
-    spread: int
+    fairness_gap: int = Field(alias="spread")
+    fairness_metric: float
+    fairness_alpha: float
     jain_index: float
     stages: list[CPSATStageResult]
     config: CPSATConfigSnapshot

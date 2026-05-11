@@ -13,7 +13,7 @@ from typing import ClassVar
 
 from ortools.sat.python import cp_model
 
-from ai.domain.problem import SchedulingProblem, jain_fairness_index
+from ai.domain.problem import SchedulingProblem
 from ai.optimizers.base import Optimizer
 from ai.optimizers.result import (
     CPSATConfig,
@@ -73,7 +73,7 @@ class _ModelBundle:
     x: list[list[cp_model.IntVar]]              # x[t][e]
     hours: list[cp_model.IntVar]                # hours[e]
     b2b_total: cp_model.IntVar
-    spread: cp_model.IntVar
+    fairness_gap: cp_model.IntVar               # was: spread
     h_max: cp_model.IntVar
     h_min: cp_model.IntVar
 
@@ -131,15 +131,15 @@ def _build_model(sp: SchedulingProblem) -> _ModelBundle:
     h_min = model.NewIntVar(0, hours_ub, "h_min")
     model.AddMaxEquality(h_max, hours)
     model.AddMinEquality(h_min, hours)
-    spread = model.NewIntVar(0, hours_ub, "spread")
-    model.Add(spread == h_max - h_min)
+    fairness_gap = model.NewIntVar(0, hours_ub, "fairness_gap")
+    model.Add(fairness_gap == h_max - h_min)
 
     return _ModelBundle(
         model=model,
         x=x,
         hours=hours,
         b2b_total=b2b_total,
-        spread=spread,
+        fairness_gap=fairness_gap,
         h_max=h_max,
         h_min=h_min,
     )
@@ -215,11 +215,16 @@ class CPSATOptimizer(Optimizer):
         )
 
         schedule, hours_per_emp = self._extract(solver_2, bundle_2)
-        jain = jain_fairness_index(hours_per_emp)
 
-        # Map first/second back to b2b/spread for the result fields.
-        b2b_count = first_star if first_obj == "b2b" else second_star
-        spread = second_star if first_obj == "b2b" else first_star
+        # Map first/second back to b2b/fairness for the result fields.
+        b2b_count    = first_star if first_obj == "b2b"      else second_star
+        fairness_gap = first_star if first_obj == "fairness" else second_star
+
+        from ai.domain.fairness import alpha_fairness, aggregate_fairness
+
+        unfairness      = aggregate_fairness(hours_per_emp, alpha=float("inf"), kind="unfairness")
+        fairness_metric = alpha_fairness(hours_per_emp, alpha=float("inf"))   # = min(hours)
+        jain            = alpha_fairness(hours_per_emp, alpha=2.0)             # side metric
 
         if verbose:
             print(f"[cpsat] stage 1 ({first_obj}): {first_star}, {t1:.2f}s")
@@ -227,9 +232,11 @@ class CPSATOptimizer(Optimizer):
 
         return CPSATResult(
             best_schedule=schedule,
-            best_fitness=(1.0 - jain, 0.0, float(b2b_count)),
+            best_fitness=(unfairness, 0.0, float(b2b_count)),
             b2b_count=int(b2b_count),
-            spread=int(spread),
+            fairness_gap=int(fairness_gap),
+            fairness_metric=float(fairness_metric),
+            fairness_alpha=float("inf"),
             jain_index=jain,
             stages=[
                 CPSATStageResult(
@@ -252,8 +259,8 @@ class CPSATOptimizer(Optimizer):
     def _objective_var(bundle: _ModelBundle, name: str) -> cp_model.IntVar:
         if name == "b2b":
             return bundle.b2b_total
-        if name == "spread":
-            return bundle.spread
+        if name == "fairness":
+            return bundle.fairness_gap
         raise AssertionError(f"unreachable: validator should have rejected {name!r}")
 
     def _extract(
