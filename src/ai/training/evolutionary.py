@@ -70,6 +70,36 @@ def train_evolutionary(
         json.dumps([s.model_dump() for s in result.step_history], indent=2)
     )
 
+    # Export feasible Pareto front for downstream RL warm-start (#17).
+    if hasattr(result, "feasible_pareto_front"):
+        # CCMO explicitly separates the feasible front from the auxiliary front.
+        # In degenerate runs CCMO may report fell_back_to_auxiliary=True (its
+        # "feasible" front then contains a constraint-violating fallback); filter
+        # defensively so the downstream consumer's feasibility contract holds.
+        src_front = result.feasible_pareto_front
+        src_fits = result.feasible_pareto_fitnesses
+    else:
+        # NSGA-II's pareto_front includes infeasible entries — filter them out
+        src_front = result.pareto_front
+        src_fits = result.pareto_fitnesses
+    feasible_front = [s for s, f in zip(src_front, src_fits) if f[1] == 0.0]
+    feasible_fits = [f for s, f in zip(src_front, src_fits) if f[1] == 0.0]
+
+    pareto_path = output_path / f"{algorithm}_pareto_front.json"
+    pareto_path.write_text(
+        json.dumps(
+            {
+                "algorithm": algorithm,
+                "fairness_alpha": config.fairness_alpha,
+                "hv_reference_point": [2.0, 1000.0, 100.0],
+                "points": [list(f) for f in feasible_fits],
+                "schedules": feasible_front,
+            },
+            indent=2,
+        )
+    )
+    print(f"Pareto front written to {pareto_path} ({len(feasible_front)} feasible solutions)")
+
     hours = problem.compute_hours(result.best_schedule)
     jain = jain_fairness_index(hours)
     print(
