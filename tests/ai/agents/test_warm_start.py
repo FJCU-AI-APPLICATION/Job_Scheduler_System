@@ -87,7 +87,8 @@ def test_cpsat_schedules_to_transitions_shape(tiny_problem):
 
 
 def test_bc_pretrain_runs_to_completion(tiny_problem):
-    """bc_pretrain executes without error on a small dataset and returns finite metrics."""
+    """bc_pretrain executes without error and returns finite metrics that
+    reflect actual BC training progress."""
     from sb3_contrib import MaskablePPO
 
     from ai.agents.environment import EnvironmentConfig, SchedulingEnv
@@ -116,7 +117,17 @@ def test_bc_pretrain_runs_to_completion(tiny_problem):
     model = MaskablePPO("MlpPolicy", env, verbose=0)
     rng = np.random.default_rng(0)
     metrics = bc_pretrain(
-        model.policy, transitions, rng, n_batches=50, batch_size=16, lr=1e-3
+        model.policy, transitions, rng, n_batches=200, batch_size=16, lr=1e-3
     )
+    # Loss must be finite + positive (cross-entropy is always ≥ 0).
     assert np.isfinite(metrics["final_loss"])
+    assert metrics["final_loss"] > 0.0
+    # Accuracy is in [0, 1]; for a small dataset + 200 batches, BC should
+    # achieve at least 50% — well above the n_actions^-1 random baseline.
     assert 0.0 <= metrics["final_accuracy"] <= 1.0
+    # On a 3-employee tiny problem with 200 BC batches over only ~28 (s,a)
+    # pairs (2 schedules × 14 shifts), BC should comfortably hit > 50%.
+    assert metrics["final_accuracy"] > 0.5, (
+        f"BC accuracy too low ({metrics['final_accuracy']:.3f}); "
+        "is BC training actually updating the policy?"
+    )

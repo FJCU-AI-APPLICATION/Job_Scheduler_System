@@ -1,7 +1,6 @@
 """End-to-end smoke test for training/rl.py --warm-start cpsat."""
 
 import json
-from pathlib import Path
 
 import pytest
 

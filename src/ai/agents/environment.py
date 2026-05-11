@@ -166,7 +166,16 @@ class SchedulingEnv(gym.Env):
 
     def _compute_delta_hv(self) -> float:
         """Marginal HV contribution of the episode's final point against the
-        reference front. Returns 0.0 if pareto_reference is empty/None."""
+        reference front. Returns 0.0 if pareto_reference is empty/None.
+
+        Sparsity note: ΔHV is 0.0 for episode points DOMINATED by the reference
+        front (the common case in early training). It's only positive when the
+        episode point extends the front. Empirically: 0 for most early
+        episodes, ~10³-10⁵ for front-extending late-training episodes.
+        The agent gets sparse-but-strong gradient on this dimension; per-step
+        shaping rewards (b2b/fairness/max-hours/unavail penalties + +0.5
+        completion bonus) provide dense gradient for early learning.
+        """
         if not self.config.pareto_reference:
             return 0.0
         from pymoo.indicators.hv import HV

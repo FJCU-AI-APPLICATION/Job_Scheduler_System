@@ -156,8 +156,12 @@ def bc_pretrain(
 ) -> dict[str, float]:
     """Train policy in-place via imitation.algorithms.bc.BC.
 
-    Returns final loss + accuracy for telemetry.
+    Returns final loss + accuracy computed via a deterministic forward pass
+    over the demonstrations (imitation's internal Logger.dump() clears
+    name_to_value so the natively-recorded metrics aren't retrievable).
     """
+    import torch
+
     bc_trainer = BC(
         observation_space=policy.observation_space,
         action_space=policy.action_space,
@@ -168,11 +172,19 @@ def bc_pretrain(
         rng=rng,
     )
     bc_trainer.train(n_batches=n_batches)
+
+    # Compute final metrics on the full demonstration set via public SB3 API.
+    obs_tensor = torch.as_tensor(transitions.obs, dtype=torch.float32)
+    acts_tensor = torch.as_tensor(transitions.acts, dtype=torch.int64)
+    with torch.no_grad():
+        _, log_probs, _ = policy.evaluate_actions(obs_tensor, acts_tensor)
+        final_loss = float(-log_probs.mean())
+    pred_actions, _ = policy.predict(transitions.obs, deterministic=True)
+    final_accuracy = float((pred_actions == transitions.acts).mean())
+
     return {
-        "final_loss": float(bc_trainer.logger.name_to_value.get("bc/loss", 0.0)),
-        "final_accuracy": float(
-            bc_trainer.logger.name_to_value.get("bc/accuracy", 0.0)
-        ),
+        "final_loss": final_loss,
+        "final_accuracy": final_accuracy,
     }
 
 
