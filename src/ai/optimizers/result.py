@@ -140,9 +140,11 @@ class OptimizerResult(BaseModel):
 
     `best_fitness` is the same 3-tuple `(unfairness, violations, b2b)` for
     every family, so the inference layer and any future benchmark runner
-    can index it uniformly. CP-SAT reports `(1 - jain_index, 0.0, b2b_count)`.
-    At α=2.0 (the default) unfairness is bit-identical to the legacy
-    `1 - jain` formulation.
+    can index it uniformly. At default α=2.0, `unfairness` is bit-identical
+    to the legacy `1 - jain_index`. CP-SAT reports
+    `(unfairness, 0.0, b2b_count)` where its α=∞ unfairness is
+    `1 - n·min/total`; the legacy `jain_index` is kept as a side metric on
+    `CPSATResult` for comparability.
     """
 
     best_schedule: list[int]

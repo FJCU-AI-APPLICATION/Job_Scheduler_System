@@ -30,12 +30,12 @@ python -m ai.training.benchmark --algorithm nsga2,ccmo --track sprint --seeds 10
 
 ### What gets reported
 
-- **Per run:** `instance`, `algorithm`, `seed`, `hypervolume`, `feasible_front_size`, best `imbalance` / `violations` / `b2b`, `wall_clock_s`.
+- **Per run:** `instance`, `algorithm`, `seed`, `hypervolume`, `feasible_front_size`, best `unfairness` / `violations` / `b2b`, `wall_clock_s`.
 - **Aggregate (per instance):** HV mean and std for each algorithm, plus a Wilcoxon signed-rank p-value when both algorithms have ≥ 6 paired non-equal seeds; otherwise `wilcoxon_p` is `null`.
 
 ### Reference point
 
-Hypervolume is computed against the reference point `(imbalance, violations, b2b) = (1.0, 1000.0, 100.0)`, which dominates any plausible objective tuple on the sprint track. Tighten this if expanding to medium or long tracks.
+Hypervolume is computed against the reference point `(unfairness, violations, b2b) = (2.0, 1000.0, 100.0)`, which dominates any plausible objective tuple on the sprint track. The `unfairness` ceiling is `2.0` (bumped from `1.0`) to cover adversarial α=1 (Nash) cases where unfairness can exceed 1. Tighten this if expanding to medium or long tracks.
 
 ### Hypervolume on the feasible front only
 
