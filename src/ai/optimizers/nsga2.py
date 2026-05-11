@@ -39,7 +39,7 @@ class NSGAIIOptimizer(Optimizer):
         if config.seed is not None:
             torch.manual_seed(config.seed)
 
-        problem = RosteringProblem(self._sp, device=config.device)
+        problem = RosteringProblem(self._sp, alpha=config.fairness_alpha, device=config.device)
         operators = [
             DayAlignedCrossOver(
                 problem,
@@ -73,7 +73,7 @@ class NSGAIIOptimizer(Optimizer):
         ranks, _ = searcher.population.compute_pareto_ranks()
         return GAStepStatus(
             generation=gen,
-            mean_obj0_imbalance=float(means[0]),
+            mean_obj0_unfairness=float(means[0]),
             mean_obj1_violations=float(means[1]),
             mean_obj2_b2b=float(means[2]),
             pareto_front_size=int((ranks == 0).sum()),
@@ -82,7 +82,7 @@ class NSGAIIOptimizer(Optimizer):
     @staticmethod
     def _print_snapshot(s: GAStepStatus) -> None:
         print(
-            f"gen={s.generation} imbalance={s.mean_obj0_imbalance:.4f} "
+            f"gen={s.generation} unfairness={s.mean_obj0_unfairness:.4f} "
             f"violations={s.mean_obj1_violations:.1f} b2b={s.mean_obj2_b2b:.1f} "
             f"pareto={s.pareto_front_size}"
         )

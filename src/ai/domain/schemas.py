@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EmployeeInfo(BaseModel):
@@ -57,7 +57,9 @@ class SchedulingResponse(BaseModel):
 # === NSGA-II (renamed from GA*) ===
 
 class NSGAIIFitnessResult(BaseModel):
-    imbalance: float
+    model_config = ConfigDict(populate_by_name=True)
+
+    unfairness: float = Field(alias="imbalance")
     constraint_violations: float
     back_to_back: float
 
@@ -77,6 +79,7 @@ class NSGAIIConfigSnapshot(BaseModel):
     elitist: bool
     seed: int | None
     device: str
+    fairness_alpha: float = 2.0
 
 
 class NSGAIITrainResult(BaseModel):
@@ -89,7 +92,9 @@ class NSGAIITrainResult(BaseModel):
 # === CCMO ===
 
 class CCMOFitnessResult(BaseModel):
-    imbalance: float
+    model_config = ConfigDict(populate_by_name=True)
+
+    unfairness: float = Field(alias="imbalance")
     constraint_violations: float
     back_to_back: float
 
@@ -108,6 +113,7 @@ class CCMOConfigSnapshot(BaseModel):
     tournament_size: int
     seed: int | None
     device: str
+    fairness_alpha: float = 2.0
 
 
 class CCMOTrainResult(BaseModel):
@@ -122,12 +128,14 @@ class CCMOTrainResult(BaseModel):
 # === Benchmark ===
 
 class BenchmarkRunRecord(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     instance: str
     algorithm: str
     seed: int
     hypervolume: float
     feasible_front_size: int
-    best_imbalance: float
+    best_unfairness: float = Field(alias="best_imbalance")
     best_violations: float
     best_b2b: int
     wall_clock_s: float

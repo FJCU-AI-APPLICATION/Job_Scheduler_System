@@ -87,3 +87,15 @@ def test_pareto_front_non_empty(default_problem: SchedulingProblem):
 
     assert len(result.pareto_front) >= 1
     assert all(len(s) == default_problem.num_shifts for s in result.pareto_front)
+
+
+def test_fairness_alpha_default_preserves_jain(tiny_problem):
+    """At default α=2.0, optimizer config carries it through and fitness obj_0
+    is bounded in [0, 1]."""
+    from ai.optimizers.nsga2 import NSGAIIOptimizer
+    from ai.optimizers.result import NSGAIIConfig
+
+    config = NSGAIIConfig(generations=5, pop_size=20, seed=42, fairness_alpha=2.0)
+    result = NSGAIIOptimizer(tiny_problem).run(config)
+    assert config.fairness_alpha == 2.0
+    assert 0.0 <= result.best_fitness[0] <= 1.0

@@ -4,14 +4,18 @@ Decision space: integer vector of length num_shifts, each gene in
 [0, num_employees-1] = which employee is assigned to that shift.
 
 Objectives (all minimized):
-  0: imbalance       = 1 - Jain's fairness index
+  0: unfairness      = 1 - welfare(hours, α) / welfare_uniform(α, total, n)
+                       (at α=2.0 this is bit-identical to legacy `1 - jain`)
   1: violations      = max-hours overrun + 10 * unavailability hits
   2: back_to_back    = count of consecutive same-employee shifts
+
+α defaults to 2.0 (Jain-equivalent); set via EvolutionaryConfig.fairness_alpha.
 """
 
 import torch
 from evotorch import Problem, SolutionBatch
 
+from ai.domain.fairness import unfairness_batch
 from ai.domain.problem import SchedulingProblem
 
 
@@ -19,9 +23,11 @@ class RosteringProblem(Problem):
     def __init__(
         self,
         scheduling_problem: SchedulingProblem,
+        alpha: float = 2.0,
         device: torch.device | str = "cpu",
     ):
         self._sp = scheduling_problem
+        self._alpha = alpha
         super().__init__(
             objective_sense=["min", "min", "min"],
             solution_length=scheduling_problem.num_shifts,
@@ -60,14 +66,7 @@ class RosteringProblem(Problem):
         )
         hours.scatter_add_(1, pop, lens)
 
-        sum_h = hours.sum(dim=1)
-        sum_sq = hours.pow(2).sum(dim=1)
-        jain = torch.where(
-            sum_sq > 0,
-            sum_h.pow(2) / (sp.num_employees * sum_sq),
-            torch.ones(n, dtype=torch.float64, device=pop.device),
-        )
-        imbalance = 1.0 - jain
+        unfairness = unfairness_batch(hours, alpha=self._alpha)
 
         exceed = (hours - self._max_hours_t).clamp(min=0).sum(dim=1)
         day_per_shift = (
@@ -81,5 +80,5 @@ class RosteringProblem(Problem):
 
         b2b = (pop[:, :-1] == pop[:, 1:]).sum(dim=1).to(torch.float64)
 
-        fitnesses = torch.stack([imbalance, violations, b2b], dim=1)
+        fitnesses = torch.stack([unfairness, violations, b2b], dim=1)
         solutions.set_evals(fitnesses.to(torch.float32))

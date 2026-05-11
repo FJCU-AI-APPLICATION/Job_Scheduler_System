@@ -25,7 +25,7 @@ from ai.domain.schemas import (
 from ai.optimizers.base import Optimizer
 
 REFERENCE_POINT: tuple[float, float, float] = (1.0, 1000.0, 100.0)
-"""Hypervolume reference point. Dominates all plausible (imbalance,
+"""Hypervolume reference point. Dominates all plausible (unfairness,
 violations, b2b) tuples on sprint-track instances; tighten if expanding
 to medium/long tracks.
 """
@@ -69,7 +69,7 @@ def run_benchmark(
                         seed=seed,
                         hypervolume=hv,
                         feasible_front_size=len(feasible_fits),
-                        best_imbalance=result.best_fitness[0],
+                        best_unfairness=result.best_fitness[0],
                         best_violations=result.best_fitness[1],
                         best_b2b=int(result.best_fitness[2]),
                         wall_clock_s=wall_clock,

@@ -50,6 +50,7 @@ class EvolutionaryConfig(OptimizerConfig):
     indpb: float = 0.05
     tournament_size: int = 4
     device: str = "cpu"
+    fairness_alpha: float = 2.0
 
 
 class NSGAIIConfig(EvolutionaryConfig):
@@ -98,7 +99,7 @@ class GAStepStatus(BaseModel):
     """Per-generation snapshot for the NSGA-II loop."""
 
     generation: int
-    mean_obj0_imbalance: float
+    mean_obj0_unfairness: float
     mean_obj1_violations: float
     mean_obj2_b2b: float
     pareto_front_size: int
@@ -109,7 +110,7 @@ class CCMOStepStatus(BaseModel):
 
     generation: int
     pop1_feasible_count: int
-    pop1_best_imbalance: float
+    pop1_best_unfairness: float
     pop1_best_b2b: float
     pop1_pareto_size: int
     pop2_pareto_size: int
@@ -126,9 +127,11 @@ class CCMOStepStatus(BaseModel):
 class OptimizerResult(BaseModel):
     """Universal result every optimizer must return.
 
-    `best_fitness` is the same 3-tuple `(imbalance, violations, b2b)` for
+    `best_fitness` is the same 3-tuple `(unfairness, violations, b2b)` for
     every family, so the inference layer and any future benchmark runner
     can index it uniformly. CP-SAT reports `(1 - jain_index, 0.0, b2b_count)`.
+    At α=2.0 (the default) unfairness is bit-identical to the legacy
+    `1 - jain` formulation.
     """
 
     best_schedule: list[int]
