@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 
@@ -146,6 +148,36 @@ class BenchmarkReport(BaseModel):
     config_summary: dict
     per_run: list[BenchmarkRunRecord]
     aggregate: list[BenchmarkAggregate]
+
+
+class CPSATConfigSnapshot(BaseModel):
+    num_employees: int
+    employee_types: list[str]
+    days: int
+    shifts_per_day: int
+    shift_lengths: list[int]
+    timeout_s_per_stage: float
+    num_workers: int
+    objective_priority: list[str]
+    seed: int | None = None
+
+
+class CPSATStageResult(BaseModel):
+    """Per-stage record for the CP-SAT lex pipeline."""
+
+    objective: str          # "b2b" | "spread"
+    status: str             # "OPTIMAL" | "FEASIBLE"
+    objective_value: int
+    wall_clock_s: float
+
+
+class CPSATTrainResult(BaseModel):
+    schedule: list[int]
+    b2b_count: int
+    spread: int
+    jain_index: float
+    stages: list[CPSATStageResult]
+    config: CPSATConfigSnapshot
 
 
 # === One-release deprecation aliases ===

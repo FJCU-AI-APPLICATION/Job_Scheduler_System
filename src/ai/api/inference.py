@@ -27,6 +27,23 @@ async def predict_rl(
     return run_rl_inference(request, checkpoint=checkpoint)
 
 
+@router.post("/cpsat", response_model=SchedulingResponse)
+async def predict_cpsat(
+    request: SchedulingRequest,
+    timeout_s_per_stage: float = Query(30.0, ge=1.0, le=300.0),
+    num_workers: int = Query(8, ge=1, le=32),
+) -> SchedulingResponse:
+    """Run the CP-SAT exact-baseline solver."""
+    return run_optimizer_inference(
+        "cpsat",
+        request,
+        config_overrides={
+            "timeout_s_per_stage": timeout_s_per_stage,
+            "num_workers": num_workers,
+        },
+    )
+
+
 @router.post("/evolutionary/{algorithm}", response_model=SchedulingResponse)
 async def predict_evolutionary(
     algorithm: EvolutionaryAlgorithm,
@@ -39,9 +56,11 @@ async def predict_evolutionary(
     return run_optimizer_inference(
         algorithm.value,
         request,
-        generations=generations,
-        pop_size=pop_size,
-        device=device,
+        config_overrides={
+            "generations": generations,
+            "pop_size": pop_size,
+            "device": device,
+        },
     )
 
 
@@ -53,5 +72,7 @@ async def predict_ga(
 ) -> SchedulingResponse:
     """DEPRECATED: use /predict/evolutionary/nsga2."""
     return run_optimizer_inference(
-        "nsga2", request, generations=generations, pop_size=pop_size
+        "nsga2",
+        request,
+        config_overrides={"generations": generations, "pop_size": pop_size},
     )
