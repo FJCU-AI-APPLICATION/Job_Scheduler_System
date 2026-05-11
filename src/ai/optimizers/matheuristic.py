@@ -25,6 +25,10 @@ import numpy as np
 from ai.domain.fairness import aggregate_fairness, alpha_fairness
 from ai.domain.problem import SchedulingProblem
 from ai.optimizers.base import Optimizer
+# Reuses optimizers/cpsat.py's semi-public model-building contract
+# (_build_model, _solve_stage, CPSAT errors). Third consumer of this contract
+# alongside CPSATOptimizer itself and agents/warm_start.enumerate_cpsat_optima
+# (#17). Any refactor of cpsat.py must keep these symbols compatible.
 from ai.optimizers.cpsat import (
     CPSATInfeasibleError,
     CPSATTimeoutError,
@@ -49,18 +53,17 @@ class MatheuristicError(RuntimeError):
 def _init_random_feasible(
     sp: SchedulingProblem,
     rng: np.random.Generator,
-    max_tries: int = 50,
 ) -> list[int]:
     """Build a random schedule that respects unavailability hard constraints.
 
     For each shift, sample uniformly over the employees available on that
-    day. Max-hours overruns are NOT respected — the outer loop's inner IP
-    will fix them via the `violations` objective component (but our
-    `MatheuristicResult` reports `unfairness, 0.0, b2b` because CP-SAT
-    enforces max-hours as a hard constraint, not a soft one).
+    day. Max-hours overruns are NOT enforced at init — the inner IP repairs
+    them on the next slice (CP-SAT enforces max_hours as a hard constraint).
+    If every neighborhood slice is also CP-SAT-infeasible (rare on well-posed
+    instances), `best` stays the random init, which may violate max_hours.
 
-    Raises MatheuristicError if no employee is available on some day after
-    max_tries attempts (instance is infeasible w.r.t. unavailability).
+    Raises MatheuristicError if any day has zero available employees
+    (instance is unavailability-infeasible).
     """
     unavail_by_day: list[set[int]] = [set() for _ in range(sp.days)]
     for day, emp in sp.unavailability:
@@ -97,6 +100,10 @@ def _inner_ip_solve(
     vars; minimize b2b_total. Stage 2: same locks + hints; minimize
     fairness_gap under b2b_total ≤ b2b★. Returns the full schedule, or
     None on infeasibility/timeout (outer loop treats this as no candidate).
+
+    Time budget is split 50/50 across the two CP-SAT solves. Tighter splits
+    (e.g. 70/30 favoring stage 2) would require a new config field; if you
+    need this, surface it on MatheuristicConfig.
     """
     half_budget = time_budget_s / 2.0
     cp_config = CPSATConfig(
@@ -148,6 +155,12 @@ _NEIGHBORHOODS = (
     ("swap_shift_block", swap_shift_block),
     ("swap_employee", swap_employee),
 )
+
+
+# Plain-Python fast paths for the outer loop. SchedulingProblem.compute_hours
+# and SchedulingProblem.count_back_to_back exist (domain/problem.py) but return
+# torch tensors and pay get_device() overhead per call — wasteful inside a
+# tight outer loop that processes one candidate at a time on CPU.
 
 
 def _compute_b2b(schedule: list[int]) -> int:

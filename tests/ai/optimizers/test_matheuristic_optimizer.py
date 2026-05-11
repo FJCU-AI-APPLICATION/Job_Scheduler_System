@@ -96,7 +96,7 @@ def test_init_random_feasible_respects_unavailability():
         unavailability=frozenset({(0, 0), (2, 1)}),
     )
     rng = np.random.default_rng(0)
-    schedule = _init_random_feasible(sp, rng, max_tries=50)
+    schedule = _init_random_feasible(sp, rng)
 
     for t, emp in enumerate(schedule):
         day = t // sp.shifts_per_day
@@ -121,7 +121,7 @@ def test_init_random_feasible_raises_on_no_availability():
     )
     rng = np.random.default_rng(0)
     with pytest.raises(MatheuristicError):
-        _init_random_feasible(sp, rng, max_tries=10)
+        _init_random_feasible(sp, rng)
 
 
 def test_inner_ip_solve_returns_schedule(tiny_problem):
@@ -340,18 +340,22 @@ def test_termination_reason_max_iterations(tiny_problem):
 
 
 def test_termination_reason_stagnation(tiny_problem):
+    """stagnation_limit=2 trips before max_iterations=20 on tiny_problem with seed 42.
+
+    Catches off-by-one and reset-on-uphill bugs in the stagnation counter.
+    """
     from ai.optimizers.matheuristic import MatheuristicOptimizer
     from ai.optimizers.result import MatheuristicConfig
 
     config = MatheuristicConfig(
-        max_iterations=200,
+        max_iterations=20,
         stagnation_limit=2,
         time_budget_s=3600.0,
         inner_ip_time_budget_s=2.0,
         seed=42,
     )
     result = MatheuristicOptimizer(tiny_problem).run(config)
-    assert result.termination_reason in {"stagnation", "max_iterations"}
+    assert result.termination_reason == "stagnation"
 
 
 def test_termination_reason_time_budget(tiny_problem):
@@ -413,7 +417,12 @@ def test_improves_or_matches_random_init(tiny_problem):
 
 
 def test_seed_reproducibility(tiny_problem):
-    """Same seed → bit-identical best_schedule and step_history (single worker)."""
+    """Same seed → bit-identical best_schedule and step_history.
+
+    `inner_ip_workers=1` is required: CP-SAT's multi-worker search is
+    non-deterministic by design (workers race on subproblems). Do NOT bump
+    this for speed without also reworking the test's invariants.
+    """
     from ai.optimizers.matheuristic import MatheuristicOptimizer
     from ai.optimizers.result import MatheuristicConfig
 
