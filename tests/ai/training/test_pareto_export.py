@@ -1,9 +1,6 @@
 """Tests for the <algo>_pareto_front.json export from training/evolutionary.py."""
 
 import json
-from pathlib import Path
-
-import pytest
 
 
 def test_ccmo_pareto_front_written(tmp_path):

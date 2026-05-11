@@ -12,6 +12,7 @@ from pathlib import Path
 from ai.agents.environment import EnvironmentConfig
 from ai.domain.problem import SchedulingProblem, jain_fairness_index
 from ai.optimizers.base import Optimizer
+from ai.optimizers.result import CCMOResult
 
 
 def train_evolutionary(
@@ -71,7 +72,7 @@ def train_evolutionary(
     )
 
     # Export feasible Pareto front for downstream RL warm-start (#17).
-    if hasattr(result, "feasible_pareto_front"):
+    if isinstance(result, CCMOResult):
         # CCMO explicitly separates the feasible front from the auxiliary front.
         # In degenerate runs CCMO may report fell_back_to_auxiliary=True (its
         # "feasible" front then contains a constraint-violating fallback); filter
