@@ -60,6 +60,20 @@ python -m ai.training.cpsat                                       # default 30s/
 python -m ai.training.cpsat --timeout-s-per-stage 60 --seed 42    # tighter run
 ```
 
+For RL with CP-SAT warm-start + Pareto-shaped reward:
+
+```bash
+# 1. Produce a Pareto front via CCMO
+python -m ai.training.evolutionary --algorithm ccmo --generations 200 --pop-size 100 --output-dir checkpoints
+
+# 2. Train MaskablePPO with warm-start + ΔHV reward
+python -m ai.training.rl \
+    --algorithm maskable_ppo \
+    --warm-start cpsat \
+    --pareto-ref checkpoints/ccmo_pareto_front.json \
+    --total-timesteps 500000
+```
+
 ### Benchmark
 
 See [`BENCHMARKS.md`](BENCHMARKS.md) for the INRC-I sprint-track A/B harness.
