@@ -3,7 +3,7 @@ import numpy as np
 from gymnasium import spaces
 from pydantic import BaseModel
 
-from ai.domain.problem import jain_fairness_index
+from ai.domain.fairness import aggregate_fairness
 
 
 class EnvironmentConfig(BaseModel):
@@ -17,6 +17,7 @@ class EnvironmentConfig(BaseModel):
     ft_max_hours: int = 160
     pt_max_hours: int = 40
     unavailability: set[tuple[int, int]] = set()
+    fairness_alpha: float = 2.0
 
 
 class SchedulingEnv(gym.Env):
@@ -96,8 +97,14 @@ class SchedulingEnv(gym.Env):
             reward -= 2.0
 
         if self._hours.sum() > 0:
-            jain = jain_fairness_index(self._hours)
-            reward -= 0.1 * (1.0 - jain)
+            # Penalty is computed against the running total at each step.
+            # At α=2 it's scale-invariant and matches 1 - jain exactly. At α=1
+            # it can spike to >>1 on early states with few employees served —
+            # intentional: α=1 incentivizes everyone-gets-something quickly.
+            penalty = aggregate_fairness(
+                self._hours, alpha=self.config.fairness_alpha, kind="unfairness"
+            )
+            reward -= 0.1 * penalty
 
         shift_type = shift_index % len(self.shift_lengths)
         shift_length = self.shift_lengths[shift_type]

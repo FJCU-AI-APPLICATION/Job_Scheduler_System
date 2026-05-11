@@ -32,6 +32,7 @@ def train(
     eval_freq: int = 5_000,
     checkpoint_freq: int = 10_000,
     net_arch: list[int] | None = None,
+    fairness_alpha: float = 2.0,
 ) -> None:
     if algorithm not in ALGORITHM_MAP:
         print(f"Unknown algorithm: {algorithm}. Choose from: {list(ALGORITHM_MAP.keys())}")
@@ -40,7 +41,7 @@ def train(
     if net_arch is None:
         net_arch = [128, 64]
 
-    config = EnvironmentConfig()
+    config = EnvironmentConfig(fairness_alpha=fairness_alpha)
     env = make_env(config)
     eval_env = make_env(config)
 
@@ -100,6 +101,7 @@ def train(
             "shift_lengths": config.shift_lengths,
             "ft_max_hours": config.ft_max_hours,
             "pt_max_hours": config.pt_max_hours,
+            "fairness_alpha": config.fairness_alpha,
         },
     }
     metadata_path = checkpoint_path / "model_metadata.json"
@@ -127,6 +129,12 @@ def main() -> None:
     parser.add_argument("--eval-freq", type=int, default=5000)
     parser.add_argument("--checkpoint-freq", type=int, default=10000)
     parser.add_argument("--net-arch", type=int, nargs="+", default=[128, 64])
+    parser.add_argument(
+        "--fairness-alpha",
+        type=float,
+        default=2.0,
+        help="α-fairness parameter for the reward shaping.",
+    )
 
     args = parser.parse_args()
 
@@ -139,6 +147,7 @@ def main() -> None:
         eval_freq=args.eval_freq,
         checkpoint_freq=args.checkpoint_freq,
         net_arch=args.net_arch,
+        fairness_alpha=args.fairness_alpha,
     )
 
 
