@@ -120,7 +120,7 @@ class MatheuristicConfig(OptimizerConfig):
     acceptance: Literal["vns", "sa"] = "vns"
     k_max: int = 3
     max_iterations: int = 100
-    stagnation_limit: int = 20
+    stagnation_limit: int = 50
     time_budget_s: float = 300.0
 
     # Inner IP slice
