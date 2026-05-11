@@ -26,8 +26,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument(
         "--objective-priority",
-        default="b2b,spread",
-        help="Comma-separated lex priority. Default: 'b2b,spread'.",
+        default="b2b,fairness",
+        help="Comma-separated lex priority. Default: 'b2b,fairness'.",
+    )
+    parser.add_argument(
+        "--fairness-alpha",
+        type=lambda s: float(s),
+        default=float("inf"),
+        help="CPSAT only supports alpha=inf (egalitarian). Other values raise ValidationError.",
     )
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--output-dir", default="checkpoints")
@@ -39,6 +45,7 @@ def main(argv: list[str] | None = None) -> int:
         timeout_s_per_stage=args.timeout_s_per_stage,
         num_workers=args.num_workers,
         objective_priority=priority,
+        fairness_alpha=args.fairness_alpha,
         seed=args.seed,
     )
 
@@ -57,13 +64,16 @@ def main(argv: list[str] | None = None) -> int:
         timeout_s_per_stage=config.timeout_s_per_stage,
         num_workers=config.num_workers,
         objective_priority=config.objective_priority,
+        fairness_alpha=config.fairness_alpha,
         seed=config.seed,
     )
 
     train_result = CPSATTrainResult(
         schedule=result.best_schedule,
         b2b_count=result.b2b_count,
-        spread=result.spread,
+        fairness_gap=result.fairness_gap,
+        fairness_metric=result.fairness_metric,
+        fairness_alpha=result.fairness_alpha,
         jain_index=result.jain_index,
         stages=result.stages,
         config=snapshot,
@@ -75,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     out_path.write_text(json.dumps(train_result.model_dump(), indent=2))
     print(f"Wrote {out_path}")
     print(
-        f"  b2b={result.b2b_count} spread={result.spread} "
+        f"  b2b={result.b2b_count} fairness_gap={result.fairness_gap} "
         f"jain={result.jain_index:.4f} wall_clock={result.total_wall_clock_s:.2f}s"
     )
     return 0

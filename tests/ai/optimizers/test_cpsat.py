@@ -29,7 +29,7 @@ def test_optimal_zero_violations(tiny_problem: SchedulingProblem):
 
 
 def test_best_fitness_is_three_tuple_zero_violations(tiny_problem: SchedulingProblem):
-    """best_fitness must match the EA shape: (imbalance, violations, b2b)."""
+    """best_fitness must match the EA shape: (unfairness, violations, b2b)."""
     from ai.optimizers.cpsat import CPSATOptimizer
     from ai.optimizers.result import CPSATConfig
 
@@ -37,10 +37,13 @@ def test_best_fitness_is_three_tuple_zero_violations(tiny_problem: SchedulingPro
     result = optimizer.run(CPSATConfig(timeout_s_per_stage=10.0, num_workers=2, seed=42))
 
     assert len(result.best_fitness) == 3
-    imbalance, violations, b2b = result.best_fitness
-    assert violations == 0.0                                 # all-hard model
-    assert imbalance == pytest.approx(1.0 - result.jain_index)
+    unfairness, violations, b2b = result.best_fitness
+    assert violations == 0.0
+    # unfairness is the α=∞ normalized form: 1 - n·min/total ∈ [0, 1].
+    assert 0.0 <= unfairness <= 1.0
     assert b2b == float(result.b2b_count)
+    # The Jain index is reported separately as a side metric (at α=2).
+    assert 0.0 <= result.jain_index <= 1.0
 
 
 def test_unavailability_respected():
@@ -94,10 +97,10 @@ def test_stages_record_optimal_status(tiny_problem: SchedulingProblem):
     )
 
     objectives = [stage.objective for stage in result.stages]
-    assert objectives == ["b2b", "spread"]
+    assert objectives == ["b2b", "fairness"]
 
 
-def test_lex_priority_b2b_then_spread(tiny_problem: SchedulingProblem):
+def test_lex_priority_b2b_then_fairness(tiny_problem: SchedulingProblem):
     """Solving stage 1 alone yields b2b★; full pipeline matches it."""
     from ai.optimizers.cpsat import CPSATOptimizer, _solve_b2b_only
     from ai.optimizers.result import CPSATConfig
@@ -116,10 +119,27 @@ def test_objective_priority_validation():
     from ai.optimizers.result import CPSATConfig
 
     with pytest.raises(ValidationError):
-        CPSATConfig(objective_priority=["fairness"])
+        CPSATConfig(objective_priority=["fairness", "spread"])
 
     with pytest.raises(ValidationError):
         CPSATConfig(objective_priority=["b2b"])
+
+    with pytest.raises(ValidationError):
+        CPSATConfig(objective_priority=["b2b", "spread"])  # old name now invalid
+
+
+def test_fairness_alpha_must_be_inf():
+    """CPSATConfig rejects finite fairness_alpha."""
+    from ai.optimizers.result import CPSATConfig
+
+    with pytest.raises(ValidationError):
+        CPSATConfig(fairness_alpha=2.0)
+
+    with pytest.raises(ValidationError):
+        CPSATConfig(fairness_alpha=0.0)
+
+    # inf is fine:
+    CPSATConfig(fairness_alpha=float("inf"))
 
 
 def test_infeasible_raises(over_constrained_problem: SchedulingProblem):

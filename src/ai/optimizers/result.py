@@ -69,8 +69,8 @@ class CCMOConfig(EvolutionaryConfig):
 
 
 _VALID_OBJECTIVE_PRIORITIES = (
-    ["b2b", "spread"],
-    ["spread", "b2b"],
+    ["b2b", "fairness"],
+    ["fairness", "b2b"],
 )
 
 
@@ -79,7 +79,8 @@ class CPSATConfig(OptimizerConfig):
 
     timeout_s_per_stage: float = 30.0
     num_workers: int = 8
-    objective_priority: list[str] = ["b2b", "spread"]
+    objective_priority: list[str] = ["b2b", "fairness"]
+    fairness_alpha: float = float("inf")
 
     @field_validator("objective_priority")
     @classmethod
@@ -87,7 +88,17 @@ class CPSATConfig(OptimizerConfig):
         if v not in _VALID_OBJECTIVE_PRIORITIES:
             raise ValueError(
                 f"Unsupported objective_priority {v}; "
-                "only ['b2b','spread'] or ['spread','b2b'] are valid until issue #16 lands"
+                "only ['b2b','fairness'] or ['fairness','b2b'] are valid."
+            )
+        return v
+
+    @field_validator("fairness_alpha")
+    @classmethod
+    def _validate_alpha(cls, v: float) -> float:
+        if v != float("inf"):
+            raise ValueError(
+                f"CPSAT only supports egalitarian fairness (alpha=inf); got {v}. "
+                "Use NSGA-II or CCMO for finite alpha values."
             )
         return v
 
@@ -169,7 +180,9 @@ class CPSATResult(OptimizerResult):
     """CP-SAT exact-baseline result. Single optimal schedule, no Pareto front."""
 
     b2b_count: int
-    spread: int
-    jain_index: float
+    fairness_gap: int            # h_max - h_min, the CP-SAT optimization variable
+    fairness_metric: float       # α-fairness welfare (at α=∞, equals min(hours))
+    fairness_alpha: float        # always float('inf') for CPSAT
+    jain_index: float            # side metric, always at α=2 for legacy comparability
     stages: list[CPSATStageResult]
     total_wall_clock_s: float

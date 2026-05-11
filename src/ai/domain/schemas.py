@@ -167,22 +167,27 @@ class CPSATConfigSnapshot(BaseModel):
     timeout_s_per_stage: float
     num_workers: int
     objective_priority: list[str]
+    fairness_alpha: float = float("inf")
     seed: int | None = None
 
 
 class CPSATStageResult(BaseModel):
     """Per-stage record for the CP-SAT lex pipeline."""
 
-    objective: str          # "b2b" | "spread"
+    objective: str          # "b2b" | "fairness"
     status: str             # "OPTIMAL" | "FEASIBLE"
     objective_value: int
     wall_clock_s: float
 
 
 class CPSATTrainResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     schedule: list[int]
     b2b_count: int
-    spread: int
+    fairness_gap: int = Field(alias="spread")
+    fairness_metric: float
+    fairness_alpha: float
     jain_index: float
     stages: list[CPSATStageResult]
     config: CPSATConfigSnapshot
