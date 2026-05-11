@@ -6,7 +6,7 @@ Multi-service shift-scheduling platform.
 |---|---|---|
 | `frontend` | Gradio | http://localhost:8080 |
 | `backend` | FastAPI + SQLAlchemy + Alembic | http://localhost:8002 (Swagger at `/docs`) |
-| `ai-server` | FastAPI + Stable-Baselines3 + EvoTorch | http://localhost:8003 (Swagger at `/docs`) |
+| `ai-server` | FastAPI + Stable-Baselines3 + EvoTorch + OR-Tools | http://localhost:8003 (Swagger at `/docs`) |
 | `database` | Postgres 16 | `localhost:5432` |
 
 ## Quick start
