@@ -10,6 +10,8 @@ CP-SAT inherits the universal layer directly; NSGA-II and CCMO inherit
 the family layer.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, field_validator
 
 from ai.domain.schemas import CPSATStageResult
@@ -21,13 +23,16 @@ __all__ = [
     "NSGAIIConfig",
     "CCMOConfig",
     "CPSATConfig",
+    "MatheuristicConfig",
     "GAStepStatus",
     "CCMOStepStatus",
+    "MatheuristicStepStatus",
     "OptimizerResult",
     "MultiObjectiveResult",
     "NSGAIIResult",
     "CCMOResult",
     "CPSATResult",
+    "MatheuristicResult",
 ]
 
 
@@ -103,6 +108,52 @@ class CPSATConfig(OptimizerConfig):
         return v
 
 
+class MatheuristicConfig(OptimizerConfig):
+    """Hybrid IP + VNS / SA matheuristic hyperparameters.
+
+    fairness_alpha is fixed to ∞ — inner IP is CP-SAT, which only encodes
+    egalitarian fairness (h_max − h_min). Same Pydantic validator pattern
+    as CPSATConfig.
+    """
+
+    # Outer loop
+    acceptance: Literal["vns", "sa"] = "vns"
+    k_max: int = 3
+    max_iterations: int = 100
+    stagnation_limit: int = 20
+    time_budget_s: float = 300.0
+
+    # Inner IP slice
+    inner_ip_time_budget_s: float = 5.0
+    inner_ip_workers: int = 4
+
+    # SA-only (ignored when acceptance == "vns")
+    sa_initial_temperature: float = 100.0
+    sa_cooling_rate: float = 0.95
+    sa_lex_weight_b2b: float = 1000.0
+
+    # Fairness primitive — CPSAT-style restriction
+    fairness_alpha: float = float("inf")
+
+    @field_validator("fairness_alpha")
+    @classmethod
+    def _validate_alpha(cls, v: float) -> float:
+        if v != float("inf"):
+            raise ValueError(
+                f"Matheuristic uses CP-SAT inner IP and only supports "
+                f"egalitarian fairness (alpha=inf); got {v}. "
+                "Use NSGA-II or CCMO for finite alpha values."
+            )
+        return v
+
+    @field_validator("acceptance")
+    @classmethod
+    def _validate_acceptance(cls, v: str) -> str:
+        if v not in ("vns", "sa"):
+            raise ValueError(f"acceptance must be 'vns' or 'sa'; got {v!r}")
+        return v
+
+
 # === Step-status types ===
 
 
@@ -126,6 +177,24 @@ class CCMOStepStatus(BaseModel):
     pop1_pareto_size: int
     pop2_pareto_size: int
     pop2_mean_violations: float
+
+
+class MatheuristicStepStatus(BaseModel):
+    """Per-outer-iteration snapshot for the matheuristic loop."""
+
+    iteration: int
+    neighborhood: str               # "swap_day" | "swap_shift_block" | "swap_employee"
+    size_k: int                     # 1..k_max
+    accepted: bool                  # outer-loop accept decision
+    candidate_b2b: int | None       # None if inner IP returned None
+    candidate_fairness_gap: int | None
+    incumbent_b2b: int              # AFTER acceptance (or unchanged)
+    incumbent_fairness_gap: int
+    best_b2b: int
+    best_fairness_gap: int
+    temperature: float              # SA only; copy of T for VNS
+    inner_ip_wall_clock_s: float
+    cumulative_wall_clock_s: float
 
 
 # CPSATStageResult lives in ai.domain.schemas (re-exported above) so the
@@ -187,4 +256,25 @@ class CPSATResult(OptimizerResult):
     fairness_alpha: float        # always float('inf') for CPSAT
     jain_index: float            # side metric, always at α=2 for legacy comparability
     stages: list[CPSATStageResult]
+    total_wall_clock_s: float
+
+
+class MatheuristicResult(OptimizerResult):
+    """Hybrid IP + VNS / SA result. Single best schedule + trajectory."""
+
+    b2b_count: int                  # best.b2b_total
+    fairness_gap: int               # best.fairness_gap (h_max - h_min)
+    fairness_metric: float          # alpha_fairness at α=∞ on best
+    fairness_alpha: float           # always float('inf')
+    jain_index: float               # side metric at α=2 for legacy comparability
+
+    # Telemetry
+    step_history: list[MatheuristicStepStatus]
+    total_iterations: int
+    total_accepted: int             # how many candidates were accepted (VNS + SA)
+    total_inner_ip_calls: int
+    total_inner_ip_failures: int    # None returns (timeout/infeasible)
+    neighborhood_usage: dict[str, int]  # {"swap_day": 17, ...}
+    final_temperature: float
+    termination_reason: Literal["time_budget", "max_iterations", "stagnation"]
     total_wall_clock_s: float

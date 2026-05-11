@@ -14,6 +14,7 @@ from ai.domain.problem import ScheduleConverter, SchedulingProblem
 from ai.domain.schemas import SchedulingRequest, SchedulingResponse
 from ai.optimizers.base import Optimizer
 from ai.optimizers.cpsat import CPSATInfeasibleError, CPSATTimeoutError
+from ai.optimizers.matheuristic import MatheuristicError
 from ai.optimizers.result import CCMOResult
 from ai.services.metrics import compute_metrics
 
@@ -40,6 +41,8 @@ def run_optimizer_inference(
             status_code=504,
             detail=f"Solver budget exhausted (stage={e.stage}, elapsed={e.elapsed_s:.1f}s)",
         )
+    except MatheuristicError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
     if isinstance(result, CCMOResult) and result.fell_back_to_auxiliary:
         raise HTTPException(
