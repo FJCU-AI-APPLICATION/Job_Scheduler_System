@@ -43,6 +43,8 @@ def run_optimizer_inference(
         )
     except MatheuristicError as e:
         raise HTTPException(status_code=422, detail=str(e))
+    except ValueError as e:                  # LAST-RL missing checkpoint, etc.
+        raise HTTPException(status_code=422, detail=str(e))
 
     if isinstance(result, CCMOResult) and result.fell_back_to_auxiliary:
         raise HTTPException(

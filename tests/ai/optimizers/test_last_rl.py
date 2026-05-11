@@ -381,3 +381,71 @@ def test_inference_seed_reproducible(tmp_path, tiny_problem):
     b = LastRLOptimizer(tiny_problem).run(inf_config)
     assert a.best_schedule == b.best_schedule
     assert a.best_cost == b.best_cost
+
+
+def test_inference_service_dispatch(tmp_path, tiny_problem):
+    """run_optimizer_inference dispatches to last_rl and returns SchedulingResponse."""
+    from ai.domain.schemas import (
+        EmployeeInfo, SchedulingRequest, ShiftInfo,
+    )
+    from ai.optimizers.last_rl import SARSALambdaPolicy, save_policy, train
+    from ai.optimizers.last_rl_problem import RosteringLastRLProblem
+    from ai.optimizers.result import LastRLConfig
+    from ai.services.optimizer_inference import run_optimizer_inference
+
+    train_config = LastRLConfig(
+        num_episodes=1, episode_length=5, ip_time_budget_s=0.5, ip_workers=1, seed=0,
+    )
+    problem = RosteringLastRLProblem(tiny_problem, train_config)
+    policy = SARSALambdaPolicy(iht_size=256, num_tilings=8, num_actions=problem.num_actions)
+    train(problem, policy, train_config, np.random.default_rng(0))
+    ckpt = tmp_path / "policy.npz"
+    save_policy(policy, ckpt, config_snapshot_json="{}")
+
+    request = SchedulingRequest(
+        employees=[
+            EmployeeInfo(id=10, employee_type="FT", max_hours=50),
+            EmployeeInfo(id=11, employee_type="FT", max_hours=50),
+            EmployeeInfo(id=12, employee_type="PT", max_hours=20),
+        ],
+        shifts=[
+            ShiftInfo(start_time="08:00", end_time="16:00", length_hours=8),
+            ShiftInfo(start_time="16:00", end_time="00:00", length_hours=8),
+        ],
+        days=7,
+        unavailability=[],
+    )
+
+    response = run_optimizer_inference(
+        "last_rl", request,
+        config_overrides={
+            "checkpoint_path": str(ckpt),
+            "episode_length": 5,
+            "ip_time_budget_s": 0.5,
+            "ip_workers": 1,
+            "seed": 0,
+        },
+    )
+    assert len(response.schedule) == 7 * 2
+    assert response.metrics is not None
+
+
+def test_inference_no_checkpoint_returns_422():
+    """Without checkpoint_path, run_optimizer_inference raises HTTPException 422."""
+    from fastapi import HTTPException
+
+    from ai.domain.schemas import EmployeeInfo, SchedulingRequest, ShiftInfo
+    from ai.services.optimizer_inference import run_optimizer_inference
+
+    request = SchedulingRequest(
+        employees=[
+            EmployeeInfo(id=1, employee_type="FT", max_hours=40),
+            EmployeeInfo(id=2, employee_type="FT", max_hours=40),
+        ],
+        shifts=[ShiftInfo(start_time="08:00", end_time="16:00", length_hours=8)],
+        days=3,
+    )
+    with pytest.raises(HTTPException) as exc:
+        run_optimizer_inference("last_rl", request, config_overrides={})
+    assert exc.value.status_code == 422
+    assert "checkpoint_path" in exc.value.detail
