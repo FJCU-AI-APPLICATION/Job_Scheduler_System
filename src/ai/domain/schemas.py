@@ -40,8 +40,11 @@ class ConstraintViolations(BaseModel):
 
 
 class ScheduleMetrics(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     fairness_score: float
-    jain_fairness_index: float
+    fairness_metric: float = Field(alias="jain_fairness_index")
+    fairness_alpha: float = 2.0
     total_hours_by_employee: dict[int, int]
     constraint_violations: ConstraintViolations
     back_to_back_rate: float

@@ -13,7 +13,8 @@ import torch
 
 from ai.agents.environment import EnvironmentConfig, SchedulingEnv
 from ai.agents.registry import ModelRegistry
-from ai.domain.problem import SchedulingProblem, jain_fairness_index
+from ai.domain.fairness import alpha_fairness
+from ai.domain.problem import SchedulingProblem
 
 
 def run_inference(
@@ -98,7 +99,7 @@ def main() -> None:
         st.write("Total shifts = ", len(schedule))
 
         hours = problem.compute_hours(schedule)
-        jain = jain_fairness_index(hours)
+        jain = alpha_fairness(hours, alpha=2.0)
         b2b = problem.count_back_to_back(schedule)
 
         st.subheader("Schedule Quality")

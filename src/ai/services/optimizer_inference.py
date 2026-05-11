@@ -49,5 +49,10 @@ def run_optimizer_inference(
 
     converter = ScheduleConverter(problem, request)
     assignments, hours_by_employee = converter.to_assignments(result.best_schedule)
-    metrics = compute_metrics(assignments, request, hours_by_employee)
+    metrics = compute_metrics(
+        assignments,
+        request,
+        hours_by_employee,
+        fairness_alpha=getattr(config, "fairness_alpha", 2.0),
+    )
     return SchedulingResponse(schedule=assignments, metrics=metrics)
