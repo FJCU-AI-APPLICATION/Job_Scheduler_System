@@ -196,6 +196,46 @@ class CPSATTrainResult(BaseModel):
     config: CPSATConfigSnapshot
 
 
+# === Matheuristic (#18) ===
+
+
+class MatheuristicConfigSnapshot(BaseModel):
+    num_employees: int
+    employee_types: list[str]
+    days: int
+    shifts_per_day: int
+    shift_lengths: list[int]
+    acceptance: str
+    k_max: int
+    max_iterations: int
+    stagnation_limit: int
+    time_budget_s: float
+    inner_ip_time_budget_s: float
+    inner_ip_workers: int
+    sa_initial_temperature: float
+    sa_cooling_rate: float
+    sa_lex_weight_b2b: float
+    fairness_alpha: float = float("inf")
+    seed: int | None = None
+
+
+class MatheuristicTrainResult(BaseModel):
+    schedule: list[int]
+    b2b_count: int
+    fairness_gap: int
+    fairness_metric: float
+    fairness_alpha: float
+    jain_index: float
+    total_iterations: int
+    total_accepted: int
+    total_inner_ip_calls: int
+    total_inner_ip_failures: int
+    neighborhood_usage: dict[str, int]
+    termination_reason: str
+    total_wall_clock_s: float
+    config: MatheuristicConfigSnapshot
+
+
 # === One-release deprecation aliases ===
 
 import warnings
