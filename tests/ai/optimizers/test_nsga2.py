@@ -90,12 +90,20 @@ def test_pareto_front_non_empty(default_problem: SchedulingProblem):
 
 
 def test_fairness_alpha_default_preserves_jain(tiny_problem):
-    """At default α=2.0, optimizer config carries it through and fitness obj_0
-    is bounded in [0, 1]."""
+    """At default α=2.0, the EA's first objective matches `1 - jain_fairness_index`
+    on the resulting schedule's hours-per-employee (within float32 tolerance,
+    since EvoTorch casts fitness to float32)."""
+    import pytest
+
+    from ai.domain.problem import jain_fairness_index
     from ai.optimizers.nsga2 import NSGAIIOptimizer
     from ai.optimizers.result import NSGAIIConfig
 
     config = NSGAIIConfig(generations=5, pop_size=20, seed=42, fairness_alpha=2.0)
     result = NSGAIIOptimizer(tiny_problem).run(config)
+
+    hours = tiny_problem.compute_hours(result.best_schedule)
+    expected = 1.0 - jain_fairness_index(hours)
+    # Allow float32 tolerance: RosteringProblem casts fitness to float32 in set_evals.
+    assert result.best_fitness[0] == pytest.approx(expected, abs=1e-4)
     assert config.fairness_alpha == 2.0
-    assert 0.0 <= result.best_fitness[0] <= 1.0
