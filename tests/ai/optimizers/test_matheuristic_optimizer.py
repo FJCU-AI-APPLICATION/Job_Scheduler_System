@@ -477,3 +477,10 @@ def test_inference_service_dispatch():
     )
     assert len(response.schedule) == 5 * 2  # 5 days × 2 shifts
     assert response.metrics is not None
+
+    # Verify the dispatch layer actually honors the request's unavailability:
+    # employee 1 is blocked on day 0, so neither shift on day 0 should be theirs.
+    day0_assignments = [a.employee_id for a in response.schedule if a.day == 0]
+    assert 1 not in day0_assignments, (
+        f"Employee 1 was unavailable on day 0 but got assigned: {day0_assignments}"
+    )
