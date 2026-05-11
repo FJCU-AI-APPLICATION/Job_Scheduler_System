@@ -12,7 +12,7 @@ the family layer.
 
 from typing import Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from ai.domain.schemas import CPSATStageResult
 
@@ -24,15 +24,19 @@ __all__ = [
     "CCMOConfig",
     "CPSATConfig",
     "MatheuristicConfig",
+    "LastRLConfig",
     "GAStepStatus",
     "CCMOStepStatus",
     "MatheuristicStepStatus",
+    "LastRLStepStatus",
+    "LastRLEpisodeStatus",
     "OptimizerResult",
     "MultiObjectiveResult",
     "NSGAIIResult",
     "CCMOResult",
     "CPSATResult",
     "MatheuristicResult",
+    "LastRLResult",
 ]
 
 
@@ -154,6 +158,67 @@ class MatheuristicConfig(OptimizerConfig):
         return v
 
 
+class LastRLConfig(OptimizerConfig):
+    """LAST-RL hyper-heuristic hyperparameters.
+
+    fairness_alpha is fixed to ∞ — our problem cost is lex-weighted with
+    the egalitarian fairness gap (max - min hours), not finite-α welfare.
+    Same restriction pattern as CPSATConfig / MatheuristicConfig.
+    """
+
+    # Outer loop budget
+    num_episodes: int = 200
+    episode_length: int = 500
+    wall_clock_budget_s: float | None = None
+
+    # SARSA(λ)
+    alpha: float = 0.1
+    gamma: float = 0.99
+    lam: float = 0.9
+    epsilon_start: float = 0.5
+    epsilon_end: float = 0.05
+
+    # Tile coding
+    iht_size: int = 4096
+    num_tilings: int = 8
+
+    # IP-backed LLH knobs
+    ip_time_budget_s: float = 2.0
+    ip_workers: int = 2
+
+    # Inference (required at run() time, None during training)
+    checkpoint_path: str | None = None
+
+    # Fairness (locked)
+    fairness_alpha: float = float("inf")
+
+    @field_validator("fairness_alpha")
+    @classmethod
+    def _validate_alpha(cls, v: float) -> float:
+        if v != float("inf"):
+            raise ValueError(
+                f"LAST-RL uses lex-weighted cost with egalitarian fairness "
+                f"(alpha=inf); got {v}. Use NSGA-II or CCMO for finite alpha."
+            )
+        return v
+
+    @field_validator("epsilon_start", "epsilon_end")
+    @classmethod
+    def _validate_epsilon_bounds(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError(f"epsilon must be in [0, 1]; got {v}")
+        return v
+
+    @model_validator(mode="after")
+    def _validate_epsilon_schedule(self):
+        if self.epsilon_start < self.epsilon_end:
+            raise ValueError(
+                f"epsilon_start ({self.epsilon_start}) must be >= "
+                f"epsilon_end ({self.epsilon_end}) for the decaying schedule"
+            )
+        return self
+
+
 # === Step-status types ===
 
 
@@ -195,6 +260,33 @@ class MatheuristicStepStatus(BaseModel):
     temperature: float              # SA only; copy of T for VNS
     inner_ip_wall_clock_s: float
     cumulative_wall_clock_s: float
+
+
+class LastRLStepStatus(BaseModel):
+    """Per-LLH-application snapshot. Many of these per episode."""
+
+    step: int
+    llh_name: str
+    action: int
+    reward: float
+    current_cost: float
+    best_cost: float
+    stagnation_count: int
+
+
+class LastRLEpisodeStatus(BaseModel):
+    """One snapshot per episode in training."""
+
+    episode: int
+    epsilon: float
+    initial_cost: float
+    final_cost: float
+    best_cost_in_episode: float
+    neighborhood_usage: dict[str, int]
+    wall_clock_s: float
+    total_reward: float
+    mean_step_reward: float
+    fraction_improving_steps: float
 
 
 # CPSATStageResult lives in ai.domain.schemas (re-exported above) so the
@@ -278,3 +370,22 @@ class MatheuristicResult(OptimizerResult):
     final_temperature: float
     termination_reason: Literal["time_budget", "max_iterations", "stagnation"]
     total_wall_clock_s: float
+
+
+class LastRLResult(OptimizerResult):
+    """LAST-RL inference result. Single best schedule + telemetry."""
+
+    best_cost: float                   # lex-weighted scalar
+    b2b_count: int
+    fairness_gap: int
+    violations: int
+    fairness_metric: float
+    fairness_alpha: float
+    jain_index: float
+
+    step_history: list[LastRLStepStatus]
+    neighborhood_usage: dict[str, int]
+    total_steps: int
+    total_wall_clock_s: float
+    initial_cost: float
+    checkpoint_used: str

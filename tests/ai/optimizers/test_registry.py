@@ -12,6 +12,7 @@ def test_init_subclass_registers(tiny_problem):
     assert "ccmo" in available
     assert "cpsat" in available
     assert "matheuristic" in available
+    assert "last_rl" in available
 
 
 def test_create_returns_concrete_optimizer(tiny_problem):
@@ -31,6 +32,7 @@ def test_create_unknown_raises(tiny_problem):
     assert "ccmo" in str(exc.value)
     assert "cpsat" in str(exc.value)
     assert "matheuristic" in str(exc.value)
+    assert "last_rl" in str(exc.value)
 
 
 def test_list_available_returns_sorted_names():

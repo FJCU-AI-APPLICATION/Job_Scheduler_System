@@ -236,6 +236,54 @@ class MatheuristicTrainResult(BaseModel):
     config: MatheuristicConfigSnapshot
 
 
+# === LAST-RL (#19) ===
+
+
+class LastRLConfigSnapshot(BaseModel):
+    num_employees: int
+    employee_types: list[str]
+    days: int
+    shifts_per_day: int
+    shift_lengths: list[int]
+
+    num_episodes: int
+    episode_length: int
+    wall_clock_budget_s: float | None
+    alpha: float
+    gamma: float
+    lam: float
+    epsilon_start: float
+    epsilon_end: float
+    iht_size: int
+    num_tilings: int
+    ip_time_budget_s: float
+    ip_workers: int
+
+    fairness_alpha: float = float("inf")
+    seed: int | None = None
+    tiling_seed: int | None = None
+
+
+class LastRLTrainResult(BaseModel):
+    """Flat training checkpoint summary; episodes stored separately as JSON."""
+
+    best_schedule: list[int]
+    best_cost: float
+    b2b_count: int
+    fairness_gap: int
+    violations: int
+    fairness_metric: float
+    fairness_alpha: float
+    jain_index: float
+
+    total_episodes: int
+    total_steps: int
+    final_epsilon: float
+    final_alpha: float
+    total_wall_clock_s: float
+    config: LastRLConfigSnapshot
+
+
 # === One-release deprecation aliases ===
 
 import warnings
