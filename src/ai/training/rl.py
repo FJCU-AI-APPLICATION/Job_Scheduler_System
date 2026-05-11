@@ -33,15 +33,41 @@ def train(
     checkpoint_freq: int = 10_000,
     net_arch: list[int] | None = None,
     fairness_alpha: float = 2.0,
+    warm_start: str | None = None,
+    warm_start_solutions: int = 20,
+    bc_steps: int = 5000,
+    bc_lr: float = 1e-3,
+    pareto_ref: str | None = None,
 ) -> None:
     if algorithm not in ALGORITHM_MAP:
         print(f"Unknown algorithm: {algorithm}. Choose from: {list(ALGORITHM_MAP.keys())}")
         sys.exit(1)
 
+    # Warm-start scope guard.
+    if warm_start == "cpsat" and algorithm != "maskable_ppo":
+        raise ValueError(
+            f"--warm-start cpsat only supported for maskable_ppo, got {algorithm}. "
+            "Drop --warm-start or switch to --algorithm maskable_ppo."
+        )
+
     if net_arch is None:
         net_arch = [128, 64]
 
-    config = EnvironmentConfig(fairness_alpha=fairness_alpha)
+    # Load Pareto reference if provided.
+    pareto_reference = None
+    if pareto_ref is not None:
+        payload = json.loads(Path(pareto_ref).read_text())
+        pareto_reference = [tuple(p) for p in payload["points"]]
+        if not pareto_reference:
+            raise ValueError(
+                f"--pareto-ref {pareto_ref} has empty 'points'. "
+                "Retrain CCMO with larger budget."
+            )
+
+    config = EnvironmentConfig(
+        fairness_alpha=fairness_alpha,
+        pareto_reference=pareto_reference,
+    )
     env = make_env(config)
     eval_env = make_env(config)
 
@@ -58,6 +84,34 @@ def train(
         policy_kwargs=dict(net_arch=net_arch),
     )
 
+    # Warm-start: BC on CP-SAT trajectories.
+    if warm_start == "cpsat":
+        import numpy as np
+
+        from ai.agents.warm_start import (
+            bc_pretrain,
+            cpsat_schedules_to_transitions,
+            enumerate_cpsat_optima,
+        )
+        from ai.domain.problem import SchedulingProblem
+        from ai.optimizers.result import CPSATConfig
+
+        problem = SchedulingProblem.from_config(config)
+        cpsat_config = CPSATConfig()
+        schedules = enumerate_cpsat_optima(
+            problem, cpsat_config, n_solutions=warm_start_solutions
+        )
+        print(f"Enumerated {len(schedules)} CP-SAT optimum schedules for BC pretraining.")
+        transitions = cpsat_schedules_to_transitions(env, schedules)
+        rng = np.random.default_rng(seed=0)
+        metrics = bc_pretrain(
+            model.policy, transitions, rng, n_batches=bc_steps, lr=bc_lr
+        )
+        print(
+            f"BC done: loss={metrics['final_loss']:.4f}, "
+            f"acc={metrics['final_accuracy']:.4f}"
+        )
+
     callbacks = [
         EvalCallback(
             eval_env,
@@ -72,12 +126,22 @@ def train(
             name_prefix="rl_model",
         ),
     ]
+    if pareto_reference is not None:
+        from ai.agents.warm_start import WarmStartCallback
+
+        callbacks.append(WarmStartCallback())
 
     print(f"Training {algorithm} for {total_timesteps} timesteps...")
     print(f"  Net arch: {net_arch}")
     print(f"  Learning rate: {learning_rate}")
     print(f"  Checkpoints: {checkpoint_path}")
     print(f"  TensorBoard logs: {tb_log_dir}")
+    print(f"  Fairness alpha: {fairness_alpha}")
+    if pareto_reference is not None:
+        print(f"  Pareto reference: {len(pareto_reference)} feasible points")
+    if warm_start:
+        print(f"  Warm-start: {warm_start} ({warm_start_solutions} solutions, "
+              f"{bc_steps} BC steps)")
 
     model.learn(
         total_timesteps=total_timesteps,
@@ -102,6 +166,15 @@ def train(
             "ft_max_hours": config.ft_max_hours,
             "pt_max_hours": config.pt_max_hours,
             "fairness_alpha": config.fairness_alpha,
+            "pareto_reference_size": (
+                len(config.pareto_reference) if config.pareto_reference else 0
+            ),
+        },
+        "warm_start": {
+            "type": warm_start,
+            "n_solutions": warm_start_solutions if warm_start else None,
+            "bc_steps": bc_steps if warm_start else None,
+            "bc_lr": bc_lr if warm_start else None,
         },
     }
     metadata_path = checkpoint_path / "model_metadata.json"
@@ -135,6 +208,36 @@ def main() -> None:
         default=2.0,
         help="α-fairness parameter for the reward shaping.",
     )
+    parser.add_argument(
+        "--warm-start",
+        choices=["cpsat"],
+        default=None,
+        help="Run BC on CP-SAT-derived trajectories before PPO training.",
+    )
+    parser.add_argument(
+        "--warm-start-solutions",
+        type=int,
+        default=20,
+        help="Number of CP-SAT-derived schedules for BC (default 20).",
+    )
+    parser.add_argument(
+        "--bc-steps",
+        type=int,
+        default=5000,
+        help="BC SGD batches (default 5000).",
+    )
+    parser.add_argument(
+        "--bc-lr",
+        type=float,
+        default=1e-3,
+        help="BC learning rate (default 1e-3).",
+    )
+    parser.add_argument(
+        "--pareto-ref",
+        type=str,
+        default=None,
+        help="Path to JSON file with CCMO Pareto front for ΔHV shaping.",
+    )
 
     args = parser.parse_args()
 
@@ -148,6 +251,11 @@ def main() -> None:
         checkpoint_freq=args.checkpoint_freq,
         net_arch=args.net_arch,
         fairness_alpha=args.fairness_alpha,
+        warm_start=args.warm_start,
+        warm_start_solutions=args.warm_start_solutions,
+        bc_steps=args.bc_steps,
+        bc_lr=args.bc_lr,
+        pareto_ref=args.pareto_ref,
     )
 
 
